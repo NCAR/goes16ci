@@ -12,7 +12,7 @@ def main():
     parser.add_argument("-p", "--path", default="/FS/EOL/operational/satellite/goes/g16/", 
                         help="Path to HPSS top level GOES-16 directory")
     parser.add_argument("-t", "--tout", default="/glade/scratch/dgagne/goes16/", help="Path to tar files")
-    parser.add_argument("-o", "--out", help="Path where output netCDF files are extracted")
+    parser.add_argument("-o", "--out", default="/glade/scratch/dgagne/goes16_nc/", help="Path where output netCDF files are extracted")
     parser.add_argument("-i", "--ins", default="GLM-L2", choices=["ABI-L1b", "GLM-L2"], 
                         help="Instrument on satellite")
     parser.add_argument("-s", "--sec", default="LCFA", choices=["LCFA", "conus", "fdisk", "meso"], help="Sector")
@@ -38,11 +38,12 @@ def extract_hpss_tar_file(date, instrument, sector, hpss_path, tar_out_path):
         jday = date.dayofyear
         date_str = date.strftime("%Y%m%d")
         if instrument == "GLM-L2":
-            tar_filename = join(hpss_path, f"OR_{instrument}_g16_{sector}_{date_str}.tar")
+            tar_filename = join(hpss_path, f"{year}", f"day{jday:03}", f"OR_{instrument}_g16_{sector}_{date_str}.tar")
             if not exists(tar_out_path):
                 makedirs(tar_out_path)
             full_tar_out_path = join(tar_out_path, instrument + "_" + sector, date_str)
-            makedirs(full_tar_out_path)
+            if not exists(full_tar_out_path):
+                makedirs(full_tar_out_path)
             chdir(full_tar_out_path)
             subprocess.call(["hsi", "get", tar_filename])
         else:
@@ -53,10 +54,11 @@ def extract_hpss_tar_file(date, instrument, sector, hpss_path, tar_out_path):
             if not exists(tar_out_path):
                 makedirs(tar_out_path)
             full_tar_out_path = join(tar_out_path, instrument + "_" + sector, date_str)
-            makedirs(full_tar_out_path)
+            if not exists(full_tar_out_path):
+                makedirs(full_tar_out_path)
             chdir(full_tar_out_path)
             for hour in range(24):
-                tar_filename = join(hpss_path, f"OR_{instrument}_g16_{sector}_{date_str}_{hour:02}{ending}")
+                tar_filename = join(hpss_path, f"{year}", f"day{jday:03}", f"OR_{instrument}_g16_{sector}_{date_str}_{hour:02}{ending}")
                 subprocess.call(["hsi", "get", tar_filename])
     except Exception as e:
         print(traceback.format_exc())
