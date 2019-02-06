@@ -66,5 +66,7 @@ def extract_hpss_tar_file(date, instrument, sector, hpss_path, tar_out_path):
     return 0
 
 
+def extract_tar_file(tar_file, out_path):
+    return
 if __name__ == "__main__":
     main()
