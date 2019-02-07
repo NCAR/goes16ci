@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
-import xarray as xr
 from glob import glob
 from datetime import datetime
-from pyproj import Proj
-from os.path import join, exists
+from pyproj import Proj, transform
+from os.path import join
+from scipy.interpolate import RectBivariateSpline
 
 
 def abi_file_dates(files, file_date='c'):
@@ -42,7 +42,7 @@ def goes16_abi_filename(date, channel, path, time_range_minutes=2):
         date (:class:`str`, :class:`datetime.datetime`, or :class:`pandas.Timestamp`): contains the date of the image
         channel (int): GOES-16 ABI `channel <https://www.goes-r.gov/mission/ABI-bands-quick-info.html>`_.
         path (str): Path to top-level directory containing GOES-16 netCDF files.
-
+        time_range_minutes (int):
     Returns:
         str: full path to requested GOES-16 file
     """
@@ -113,3 +113,12 @@ def lon_lat_coords(goes16_ds, projection):
     lons[lons > 1e10] = np.nan
     lats[lats > 1e10] = np.nan
     return lons, lats
+
+
+def regrid_imagery(image, x_image, y_image, x_regrid, y_regrid, image_proj, regrid_proj, spline_kws=None):
+    if spline_kws is None:
+        spline_kws = dict()
+    x_regrid_image, y_regrid_image = transform(image_proj, regrid_proj, x_regrid.ravel(), y_regrid.ravel())
+    rbs = RectBivariateSpline(x_image, y_image, image, **spline_kws)
+    regridded_image = rbs.ev(x_regrid_image, y_regrid_image).reshape(x_regrid.shape)
+    return regridded_image
