@@ -3,7 +3,8 @@ import numpy as np
 import pandas as pd
 from pyproj import Proj
 from glob import glob
-from os.path import join
+from os.path import join, exists
+from os import makedirs
 from datetime import datetime
 
 
@@ -24,7 +25,7 @@ def load_glm_data(path, start_date, end_date, freq="20S",
     Returns:
         :class:`pandas.DataFrame`: all of the flash events during the specified time period.
     """
-    all_times = pd.DatetimeIndex(start=start_date, end=end_date, freq=freq)[0:-1]
+    all_times = pd.DatetimeIndex(pd.date_range(start=start_date, end=end_date, freq=freq))[0:-1]
     print(all_times[0], all_times[-1])
     all_dates = np.unique(all_times.date)
     all_date_strings = [date.strftime("%Y%m%d") for date in all_dates]
@@ -127,7 +128,7 @@ def create_glm_grids(glm_path, out_path, start_date, end_date, out_freq,
     Returns:
 
     """
-    out_dates = pd.DatetimeIndex(start=start_date, end=end_date, freq=out_freq)
+    out_dates = pd.DatetimeIndex(pd.date_range(start=start_date, end=end_date, freq=out_freq))
     grid = GLMGrid(grid_proj_params, dx_km, x_extent_km, y_extent_km)
     flash_count_grid = xr.DataArray(np.zeros((out_dates.size - 1, grid.y_points.size, grid.x_points.size),
                                              dtype=np.int32),
@@ -146,6 +147,8 @@ def create_glm_grids(glm_path, out_path, start_date, end_date, out_freq,
     flash_count_grid.attrs.update(grid_proj_params)
     out_file = join(out_path,
                     f"glm_grid_s{start_date.strftime('%Y%m%dT%H%M%S')}_e{end_date.strftime('%Y%m%dT%H%M%S')}.nc")
+    if not exists(out_path):
+        makedirs(out_path)
     flash_count_grid.to_netcdf(out_file)
     if return_grid:
         return flash_count_grid
