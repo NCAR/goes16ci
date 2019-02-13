@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 from goes16ci.lightning import create_glm_grids
 from goes16ci.imager import extract_abi_patches
-from dask.distributed import LocalCluster, Client, wait
+from dask.distributed import LocalCluster, Client, as_completed, wait
 import argparse
 import yaml
-
+import traceback
 
 def main():
     parser = argparse.ArgumentParser()
@@ -17,10 +17,11 @@ def main():
     with open(args.config, "r") as config_file:
         config = yaml.load(config_file)
     cluster = LocalCluster(n_workers=args.nprocs, processes=True, threads_per_worker=1)
-    client = Client(cluster, asynchronous=True)
+    client = Client(cluster)
     print(cluster, flush=True)
     print(client, flush=True)
     if args.glm:
+        print("Starting lightning", flush=True)
         glm_config = config["glm"]
         glm_path = glm_config["glm_path"]
         grid_path = glm_config["grid_path"]
@@ -35,10 +36,15 @@ def main():
         y_extent_km = glm_config["y_extent_km"]
         glm_jobs = []
         for date in glm_file_dates:
+            print(date, flush=True)
             glm_jobs.append(client.submit(create_glm_grids, glm_path, grid_path, date, date + pd.Timedelta(file_freq),
                                           grid_freq, grid_proj_params, dx_km, x_extent_km, y_extent_km))
-        wait(glm_jobs)
-        glm_results = client.gather(glm_jobs)
+        for glm_job in as_completed(glm_jobs):
+            res = glm_job.result()
+            if glm_job.status == "error":
+                traceback.format_tb(res[-1])
+        #wait(glm_jobs)
+        #glm_results = client.gather(glm_jobs)
         del glm_jobs[:]
     if args.abi:
         abi_config = config["abi"]
@@ -53,10 +59,16 @@ def main():
         patch_x_length_pixels = abi_config["patch_x_length_pixels"]
         patch_y_length_pixels = abi_config["patch_y_length_pixels"]
         samples_per_time = abi_config["samples_per_time"]
-        abi_file_dates = pd.TimedeltaIndex(start=start_date, end=end_date, freq=file_freq)
+        abi_file_dates = pd.DatetimeIndex(pd.date_range(start=start_date, end=end_date, freq=file_freq))
         abi_jobs = []
         for date in abi_file_dates:
-            abi_jobs.append(client.submit(extract_abi_patches, abi_path, patch_path, glm_grid_path, ))
+            abi_jobs.append(client.submit(extract_abi_patches, abi_path, patch_path, glm_grid_path, date, bands,
+                                          lead_time, patch_x_length_pixels, patch_y_length_pixels, samples_per_time,
+                                          glm_file_freq=file_freq))
+        #for abi_job in as_completed(abi_jobs):
+        #    res = abi_job.result()
+        #    if abi_job.status == "error":
+        #        print(traceback.format_tb(res[-1]),flush=True)
         wait(abi_jobs)
         abi_results = client.gather(abi_jobs)
         del abi_jobs[:]

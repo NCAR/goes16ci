@@ -37,11 +37,14 @@ def load_glm_data(path, start_date, end_date, freq="20S",
                                                              "%Y%j%H%M%S"))
             if all_times[0] <= file_start_date <= all_times[-1]:
                 glm_ds = xr.open_dataset(glm_date_file)
-                all_flashes.append(glm_ds[list(columns)].to_dataframe())
+                if glm_ds[columns[0]].shape[0] > 0:
+                    all_flashes.append(glm_ds[list(columns)].to_dataframe())
                 glm_ds.close()
                 del glm_ds
-    combined_flashes = pd.concat(all_flashes)
-    print(combined_flashes.shape)
+    if len(all_flashes) > 0:
+        combined_flashes = pd.concat(all_flashes)
+    else:
+        combined_flashes = None
     return combined_flashes
 
 
@@ -127,6 +130,7 @@ def create_glm_grids(glm_path, out_path, start_date, end_date, out_freq,
     Returns:
 
     """
+    print(start_date, end_date, flush=True)
     out_dates = pd.DatetimeIndex(pd.date_range(start=start_date, end=end_date, freq=out_freq))
     grid = GLMGrid(grid_proj_params, dx_km, x_extent_km, y_extent_km)
     flash_count_grid = xr.DataArray(np.zeros((out_dates.size - 1, grid.y_points.size, grid.x_points.size),
@@ -135,13 +139,13 @@ def create_glm_grids(glm_path, out_path, start_date, end_date, out_freq,
                                             "lat": (("y", "x"), grid.lat_grid),
                                             "time": out_dates[1:]}, dims=("time", "y", "x"),
                                     name="lightning_counts")
-    print(out_dates)
+    print(out_dates, flush=True)
     for o in range(1, out_dates.shape[0]):
         period_start = out_dates[o - 1]
         period_end = out_dates[o]
-        print(period_start, period_end)
         period_flashes = load_glm_data(glm_path, period_start, period_end)
-        flash_count_grid[o - 1] = grid.grid_glm_data(period_flashes)
+        if period_flashes is not None:
+            flash_count_grid[o - 1] = grid.grid_glm_data(period_flashes)
         print(out_dates[o], flash_count_grid[o - 1].values.max(), flash_count_grid[o - 1].values.sum(), flush=True)
         del period_flashes
     flash_count_grid.attrs.update(grid_proj_params)

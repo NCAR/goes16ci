@@ -21,7 +21,7 @@ class GOES16ABI(object):
         goes16_ds (`dict` of :class:`xarray.Dataset` objects): Datasets for each channel
 
     """
-    def __init__(self, date, bands, path, time_range_minutes=2):
+    def __init__(self, date, bands, path, time_range_minutes=5):
         self.date = pd.Timestamp(date)
         self.bands = np.array(bands, dtype=np.int32)
         self.path = path
@@ -42,7 +42,7 @@ class GOES16ABI(object):
         self.lon_lat_coords()
 
     @staticmethod
-    def abi_file_dates(files, file_date='s'):
+    def abi_file_dates(files, file_date='e'):
         """
         Extract the file creation dates from a list of GOES-16 files.
         Date format: Year (%Y), Day of Year (%j), Hour (%H), Minute (%M), Second (%s), Tenth of a second
@@ -77,15 +77,16 @@ class GOES16ABI(object):
         Returns:
             str: full path to requested GOES-16 file
         """
-        pd_date = self.date
-        channel_files = sorted(glob(join(self.path, pd_date.strftime("%Y%m%d"),
-                                         f"OR_ABI-L1b-RadC-M3C{channel:02d}_G16_*.nc")))
+        pd_date = pd.Timestamp(self.date)
+        channel_files = np.array(sorted(glob(join(self.path, pd_date.strftime("%Y%m%d"),
+                                         f"OR_ABI-L1b-RadC-M3C{channel:02d}_G16_*.nc"))))
         channel_dates = self.abi_file_dates(channel_files)
-        file_index = np.where(np.abs(pd_date - channel_dates) < pd.Timedelta(minutes=self.time_range_minutes))[0]
+        date_diffs = np.abs(channel_dates - pd_date)
+        file_index = np.where(date_diffs <= pd.Timedelta(minutes=self.time_range_minutes))[0]
         if len(file_index) == 0:
-            raise FileNotFoundError('No GOES-16 files within 2 minutes of ' + pd_date)
+            raise FileNotFoundError('No GOES-16 files within {0:d} minutes of '.format(self.time_range_minutes) + pd_date.strftime("%Y-%m-%d %H:%M:%S" + ". Nearest file is within {0}".format(date_diffs.total_seconds().values.min() / 60)))
         else:
-            filename = channel_files[file_index[0]]
+            filename = channel_files[np.argmin(date_diffs)]
         return filename
 
     def goes16_projection(self):
@@ -182,15 +183,17 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
     if not exists(glm_grid_file):
         raise FileNotFoundError(glm_grid_file + " not found")
     glm_ds = xr.open_dataset(glm_grid_file)
-    times = pd.DatetimeIndex(glm_ds["times"].values)
+    times = pd.DatetimeIndex(glm_ds["time"].values)
     lons = glm_ds["lon"]
     lats = glm_ds["lat"]
+    counts = glm_ds["lightning_counts"]
     patches = np.zeros((times.size * samples_per_time, patch_y_length_pixels, patch_x_length_pixels, bands.size),
                        dtype=np.float32)
     patch_lons = np.zeros((times.size * samples_per_time, patch_y_length_pixels, patch_x_length_pixels),
                           dtype=np.float32)
     patch_lats = np.zeros((times.size * samples_per_time, patch_y_length_pixels, patch_x_length_pixels),
                           dtype=np.float32)
+    flash_counts = np.zeros((times.size * samples_per_time), dtype=np.int32)
     grid_sample_indices = np.arange(lons.size)
     patch_times = []
     for t, time in enumerate(times):
@@ -198,9 +201,10 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
         patch_time = time - pd.Timedelta(lead_time)
         time_samples = np.random.choice(grid_sample_indices, size=samples_per_time, replace=False)
         sample_rows, sample_cols = np.unravel_index(time_samples, lons.shape)
-        goes16_abi_timestep = GOES16ABI(patch_time, bands, abi_path)
+        goes16_abi_timestep = GOES16ABI(patch_time, bands, abi_path, time_range_minutes=11)
         patch_times.extend([time] * samples_per_time)
         for s in range(samples_per_time):
+            flash_counts[t * s] = counts[t, sample_rows[s], sample_cols[s]].values
             patches[t * s], \
                 patch_lons[t * s], \
                 patch_lats[t * s] = goes16_abi_timestep.extract_image_patch(lons[sample_rows[s], sample_cols[s]],
@@ -212,10 +216,13 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
     x_coords = np.arange(patch_x_length_pixels)
     y_coords = np.arange(patch_y_length_pixels)
     patch_num = np.arange(patches.shape[0])
+    glm_ds.close()
+    del glm_ds
     patch_ds = xr.Dataset(data_vars={"abi": (("patch", "y", "x", "band"), patches),
                                      "time": (("patch", ), pd.DatetimeIndex(patch_times)),
                                      "lon": (("patch", "y", "x"), patch_lons),
-                                     "lat": (("patch", "y", "x"), patch_lats)},
+                                     "lat": (("patch", "y", "x"), patch_lats),
+                                     "flash_counts": (("patch", ), flash_counts)},
                           coords={"patch": patch_num,
                                   "y": y_coords, "x": x_coords, "band": bands})
     out_file = join(patch_path, "abi_patches_{0}.nc".format(glm_file_date.strftime(glm_date_format)))
