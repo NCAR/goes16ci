@@ -93,7 +93,6 @@ class GLMGrid(object):
                                  (flash_x <= self.x_points.max() + self.dx_km / 2) &
                                  (flash_y >= self.y_points.min() - self.dx_km / 2) &
                                  (flash_y <= self.y_points.max() + self.dx_km / 2))[0]
-        print(valid_flashes.size)
         if valid_flashes.size > 0:
             x_grid_flat = self.x_grid.reshape((self.x_grid.size, 1))
             y_grid_flat = self.y_grid.reshape((self.x_grid.size, 1))
@@ -143,12 +142,13 @@ def create_glm_grids(glm_path, out_path, start_date, end_date, out_freq,
         print(period_start, period_end)
         period_flashes = load_glm_data(glm_path, period_start, period_end)
         flash_count_grid[o - 1] = grid.grid_glm_data(period_flashes)
-        print(out_dates[o], flash_count_grid[o - 1].values.max(), flash_count_grid[o - 1].values.sum())
+        print(out_dates[o], flash_count_grid[o - 1].values.max(), flash_count_grid[o - 1].values.sum(), flush=True)
+        del period_flashes
     flash_count_grid.attrs.update(grid_proj_params)
     out_file = join(out_path,
                     f"glm_grid_s{start_date.strftime('%Y%m%dT%H%M%S')}_e{end_date.strftime('%Y%m%dT%H%M%S')}.nc")
     if not exists(out_path):
         makedirs(out_path)
-    flash_count_grid.to_netcdf(out_file)
+    flash_count_grid.to_netcdf(out_file, encoding={"lightning_counts": {"zlib": True}})
     if return_grid:
         return flash_count_grid

@@ -9,15 +9,15 @@ import yaml
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("config", required=True, help="Config yaml file")
-    parser.add_argument("-p", "--procs", type=int, default=1, help="Number of processes")
+    parser.add_argument("config", help="Config yaml file")
+    parser.add_argument("-n", "--nprocs", type=int, default=1, help="Number of processes")
     parser.add_argument("-l", "--glm", action="store_true", help="Create GLM grids")
-    parser.add_argument("-p", "--patch", action="store_true", help="Sample GOES-16 patches")
+    parser.add_argument("-a", "--abi", action="store_true", help="Sample ABI Patches")
     args = parser.parse_args()
     with open(args.config, "r") as config_file:
         config = yaml.load(config_file)
-    cluster = LocalCluster(n_workers=args.procs)
-    client = Client(cluster)
+    cluster = LocalCluster(n_workers=args.nprocs, processes=True, threads_per_worker=1)
+    client = Client(cluster, asynchronous=True)
     print(cluster, flush=True)
     print(client, flush=True)
     if args.glm:
