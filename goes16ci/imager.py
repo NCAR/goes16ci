@@ -156,7 +156,7 @@ class GOES16ABI(object):
 
 def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, bands,
                         lead_time, patch_x_length_pixels, patch_y_length_pixels, samples_per_time,
-                        glm_file_freq="1D", glm_date_format="%Y%m%dT%H%M%S"):
+                        glm_file_freq="1D", max_pos_sample_ratio=0.5, glm_date_format="%Y%m%dT%H%M%S"):
     """
     For a given set of gridded GLM counts, sample from the grids at each time step and extract ABI
     patches centered on the lightning grid cell.
@@ -194,17 +194,27 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
     patch_lats = np.zeros((times.size * samples_per_time, patch_y_length_pixels, patch_x_length_pixels),
                           dtype=np.float32)
     flash_counts = np.zeros((times.size * samples_per_time), dtype=np.int32)
-    grid_sample_indices = np.arange(lons.size)
+    grid_sample_indices = np.arange(lons.size, dtype=np.int32)
+    max_pos_counts = int(samples_per_time * max_pos_sample_ratio)
     patch_times = []
     for t, time in enumerate(times):
         print(time, flush=True)
         patch_time = time - pd.Timedelta(lead_time)
-        time_samples = np.random.choice(grid_sample_indices, size=samples_per_time, replace=False)
+        pos_count = np.count_nonzero(counts[t] > 0)
+        pos_sample_size = np.minimum(pos_count, max_pos_counts)
+        neg_sample_size = samples_per_time - pos_sample_size
+        count_grid = counts[t].values
+        if pos_sample_size > 0:
+            pos_time_samples = np.random.choice(grid_sample_indices[count_grid.ravel() > 0], size=pos_sample_size, replace=False)
+            neg_time_samples = np.random.choice(grid_sample_indices[count_grid.ravel() == 0], size=neg_sample_size, replace=False)
+            time_samples = np.concatenate([pos_time_samples, neg_time_samples])
+        else:
+            time_samples = np.random.choice(grid_sample_indices, size=samples_per_time, replace=False)
         sample_rows, sample_cols = np.unravel_index(time_samples, lons.shape)
         goes16_abi_timestep = GOES16ABI(patch_time, bands, abi_path, time_range_minutes=11)
         patch_times.extend([time] * samples_per_time)
         for s in range(samples_per_time):
-            flash_counts[t * s] = counts[t, sample_rows[s], sample_cols[s]].values
+            flash_counts[t * s] = count_grid[sample_rows[s], sample_cols[s]]
             patches[t * s], \
                 patch_lons[t * s], \
                 patch_lats[t * s] = goes16_abi_timestep.extract_image_patch(lons[sample_rows[s], sample_cols[s]],

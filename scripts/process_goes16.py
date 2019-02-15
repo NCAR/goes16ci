@@ -65,10 +65,10 @@ def main():
             abi_jobs.append(client.submit(extract_abi_patches, abi_path, patch_path, glm_grid_path, date, bands,
                                           lead_time, patch_x_length_pixels, patch_y_length_pixels, samples_per_time,
                                           glm_file_freq=file_freq))
-        #for abi_job in as_completed(abi_jobs):
-        #    res = abi_job.result()
-        #    if abi_job.status == "error":
-        #        print(traceback.format_tb(res[-1]),flush=True)
+       # for abi_job in as_completed(abi_jobs):
+       #     res = abi_job.result()
+       #     if abi_job.status == "error":
+       #         print(traceback.format_tb(res[-1]),flush=True)
         wait(abi_jobs)
         abi_results = client.gather(abi_jobs)
         del abi_jobs[:]

@@ -4,7 +4,7 @@ glm:
   start_date: "2018-04-01" # First date to perform gridding
   end_date: "2018-06-06" # Last date to perform gridding (inclusive)
   file_freq: "1D" # How often to write separate netCDF files
-  grid_freq: "10Min" # Aggregation period for each gridded time step
+  grid_freq: "20Min" # Aggregation period for each gridded time step
   grid_proj_params: # Projection definition for Pyproj (PROJ4 keywords)
     proj: "lcc"
     lon_0: -90.0
@@ -20,10 +20,10 @@ abi:
   glm_grid_path: "/glade/p/cisl/aiml/dgagne/goes16_nc/GLM_grids/"
   start_date: "2018-04-02"
   end_date: "2018-06-06"
-  bands: [4, 7, 8, 9, 10, 11, 14]
+  bands: [8, 9, 10, 14]
   file_freq: "1D"
   lead_time: "30Min"
   patch_x_length_pixels: 64
   patch_y_length_pixels: 64
-  samples_per_time: 100
+  samples_per_time: 20
 

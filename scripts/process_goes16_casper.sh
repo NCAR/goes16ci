@@ -17,4 +17,4 @@ export PYTHONPATH="/glade/u/home/dgagne/.local/lib/python3.6/site-packages/"
 cd $HOME/goes16ci
 python setup.py install --user
 cd $HOME/goes16ci/scripts
-python -u process_goes16.py goes16_process_config.yml -n 36 -a
+python -u process_goes16.py goes16_process_config.yml -n 36 -a 
