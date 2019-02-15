@@ -1,0 +1,15 @@
+log_file: "goes16_benchmark_progress.log"
+log_level: 20
+data_path: "./data"
+parallel_processes: 8
+split_date: "2018-05-01"
+conv_net_parameters:
+  min_filters: 32
+  use_dropout: 1
+  dropout_alpha: 0.5
+cpu: 1
+num_cpus: 1
+single_gpu: 1
+multi_gpu: 1
+num_gpus: 8
+random_seed: 4832
