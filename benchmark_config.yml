@@ -7,9 +7,10 @@ conv_net_parameters:
   min_filters: 32
   use_dropout: 1
   dropout_alpha: 0.5
-cpu: 1
+  verbose: 1
+cpu: 0
 num_cpus: 1
 single_gpu: 1
 multi_gpu: 1
-num_gpus: 8
+num_gpus: 2
 random_seed: 4832

@@ -30,13 +30,13 @@ def main():
     benchmark_data["load_data_serial"]["end"] = timer()
     benchmark_data["load_data_serial"]["duration"] = benchmark_data["load_data_serial"]["end"] -\
         benchmark_data["load_data_serial"]["start"]
-    del all_data, all_counts, all_time
+    #del all_data, all_counts, all_time
     # load data parallel
     logging.info("Begin parallel load data")
     benchmark_data["load_data_parallel"] = {}
     benchmark_data["load_data_parallel"]["processes"] = config["parallel_processes"]
     benchmark_data["load_data_parallel"]["start"] = timer()
-    all_data, all_counts, all_time = load_data_parallel(config["data_path"], config["parallel_processes"])
+   # all_data, all_counts, all_time = load_data_parallel(config["data_path"], config["parallel_processes"])
     benchmark_data["load_data_parallel"]["end"] = timer()
     benchmark_data["load_data_parallel"]["duration"] = benchmark_data["load_data_parallel"]["end"] - \
         benchmark_data["load_data_parallel"]["start"]
@@ -87,7 +87,7 @@ def main():
 
     # Save benchmark data
     output_filename = "./goes_benchmark_data_{0}.yml".format(datetime.utcnow().strftime("%Y%m%d_%H%M%S"))
-    logging.info("Saving benchmark data to {output_filename}", output_filename=output_filename)
+    logging.info("Saving benchmark data to {output_filename}".format(output_filename=output_filename))
     with open(output_filename, "w") as output_file:
         yaml.dump(benchmark_data, output_file)
     return

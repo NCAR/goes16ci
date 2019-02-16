@@ -4,12 +4,12 @@ from glob import glob
 from os.path import join
 import pandas as pd
 from dask.distributed import LocalCluster, Client, wait
-
+import logging
 
 def load_single_data_file(filename, image_variable="abi", count_variable="flash_counts", time_variable="time"):
     ds = xr.open_dataset(filename)
     imagery = ds.variables[image_variable].values
-    counts = ds.varaibles[count_variable].values
+    counts = ds.variables[count_variable].values
     time = ds.variables[time_variable].values
     ds.close()
     return imagery, counts, time
@@ -21,6 +21,7 @@ def load_data_serial(data_path, image_variable="abi", count_variable="flash_coun
     counts_list = []
     time_list = []
     for data_file in data_files:
+        logging.info(data_file)
         images, counts, time = load_single_data_file(data_file, image_variable=image_variable,
                                                      count_variable=count_variable, time_variable=time_variable)
         images_list.append(images)
