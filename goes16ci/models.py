@@ -1,6 +1,7 @@
 from keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, add
 from keras.layers import BatchNormalization
 from keras.models import Model
+from keras.optimizers import Adam, SGD
 import keras.backend as K
 from keras.utils import multi_gpu_model
 import numpy as np
@@ -11,7 +12,8 @@ class StandardConvNet(object):
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid",
                  pooling="mean", use_dropout=False, dropout_alpha=0.0,
-                 optimizer="adam", loss="mse", leaky_alpha=0.1, batch_size=256, epochs=10, verbose=0):
+                 optimizer="adam", loss="mse", leaky_alpha=0.1, 
+                 learning_rate=0.00001, batch_size=256, epochs=10, verbose=0):
         self.min_filters = min_filters
         self.filter_width = filter_width
         self.filter_growth_rate = filter_growth_rate
@@ -22,6 +24,7 @@ class StandardConvNet(object):
         self.pooling = pooling
         self.dropout_alpha = dropout_alpha
         self.optimizer = optimizer
+        self.learning_rate = learning_rate
         self.loss = loss
         self.leaky_alpha = leaky_alpha
         self.batch_size = batch_size
@@ -54,7 +57,11 @@ class StandardConvNet(object):
         self.model = Model(input_layer, scn_model)
 
     def compile_model(self):
-        self.model.compile(self.optimizer, self.loss)
+        if self.optimizer == "adam":
+            opt = Adam(lr=self.learning_rate)
+        else:
+            opt = SGD(lr=self.learning_rate, momentum=0.99)
+        self.model.compile(opt, self.loss)
 
     @staticmethod
     def get_data_shapes(x, y):
@@ -85,16 +92,16 @@ class StandardConvNet(object):
 class ResNet(StandardConvNet):
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid",
-                 pooling="mean", use_dropout=False, dropout_alpha=0.0,
+                 pooling="mean", use_dropout=False, dropout_alpha=0.0, learning_rate=0.00001,
                  optimizer="adam", loss="mse", leaky_alpha=0.1, batch_size=256, epochs=10, verbose=0):
         super().__init__(min_filters=min_filters, filter_growth_rate=filter_growth_rate, filter_width=filter_width,
                          min_data_width=min_data_width, hidden_activation=hidden_activation,
                          output_activation=output_activation, pooling=pooling, use_dropout=use_dropout,
                          dropout_alpha=dropout_alpha, optimizer=optimizer, loss=loss, leaky_alpha=leaky_alpha,
-                         batch_size=batch_size, epochs=epochs, verbose=verbose)
+                         batch_size=batch_size, epochs=epochs, verbose=verbose, learning_rate=learning_rate)
 
     def residual_block(self, filters, input_layer, layer_number=0):
-        if input_layer.output.shape[-1].value != filters:
+        if input_layer.shape[-1].value != filters:
             x = Conv2D(filters, self.filter_width, padding="same")(input_layer)
         else:
             x = input_layer
@@ -167,11 +174,11 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
             #scn = StandardConvNet(**conv_net_hyperparameters)
             scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
     elif num_gpus > 1:
-        with K.tf.device("cpu:0"):
-            scn = ResNet(**conv_net_hyperparameters)
-            #scn = StandardConvNet(**conv_net_hyperparameters)
-            x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
-            scn.build_network(x_shape, y_size)
+        scn = ResNet(**conv_net_hyperparameters)
+        scn.batch_size *= num_gpus
+        #scn = StandardConvNet(**conv_net_hyperparameters)
+        x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
+        scn.build_network(x_shape, y_size)
         scn.model = multi_gpu_model(scn.model, gpus=num_gpus, cpu_merge=cpu_merge, cpu_relocation=cpu_relocation)
         scn.compile_model()
         scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)

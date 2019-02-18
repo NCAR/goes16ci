@@ -2,12 +2,15 @@ log_file: "goes16_benchmark_progress.log"
 log_level: 20
 data_path: "./data"
 parallel_processes: 8
-split_date: "2018-05-01"
+split_date: "2018-05-11"
 conv_net_parameters:
   min_filters: 32
-  use_dropout: 1
-  dropout_alpha: 0.5
+  use_dropout: 0
+  dropout_alpha: 0.1
   verbose: 1
+  epochs: 3
+  learning_rate: 0.0001
+  batch_size: 128
 cpu: 0
 num_cpus: 1
 single_gpu: 1

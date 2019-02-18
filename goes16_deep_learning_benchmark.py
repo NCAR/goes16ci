@@ -20,7 +20,7 @@ def main():
     args = parser.parse_args()
     with open(args.config, "r") as config_file:
         config = yaml.load(config_file)
-    logging.basicConfig(filename=config["log_file"], level=config["log_level"])
+    logging.basicConfig(stream=sys.stdout, level=config["log_level"])
     benchmark_data = dict()
     # load data serial
     logging.info("Begin serial load data")
@@ -28,8 +28,9 @@ def main():
     benchmark_data["load_data_serial"]["start"] = timer()
     all_data, all_counts, all_time = load_data_serial(config["data_path"])
     benchmark_data["load_data_serial"]["end"] = timer()
-    benchmark_data["load_data_serial"]["duration"] = benchmark_data["load_data_serial"]["end"] -\
-        benchmark_data["load_data_serial"]["start"]
+    benchmark_data["load_data_serial"]["duration"] = benchmark_data["load_data_serial"]["end"] - benchmark_data["load_data_serial"]["start"]
+    for v in range(all_data.shape[-1]):
+        all_data[:, :, :, v][np.isnan(all_data[:, :, :, v])] = np.nanmin(all_data[:, :, :, v])
     #del all_data, all_counts, all_time
     # load data parallel
     logging.info("Begin parallel load data")
