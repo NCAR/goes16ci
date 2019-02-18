@@ -6,7 +6,7 @@ import yaml
 import pandas as pd
 import numpy as np
 from goes16ci.data import load_data_parallel, load_data_serial
-from goes16ci.models import train_conv_net_cpu, train_conv_net_gpu
+from goes16ci.models import train_conv_net_cpu, train_conv_net_gpu, MinMaxScaler2D
 from timeit import default_timer as timer
 import argparse
 import logging
@@ -48,12 +48,16 @@ def main():
     val_data = all_data[val_indices]
     train_counts = np.where(all_counts[train_indices] > 0, 1, 0)
     val_counts = np.where(all_counts[val_indices] > 0, 1, 0)
+    # Rescale training and validation data
+    scaler = MinMaxScaler2D()
+    train_data_scaled = scaler.fit_transform(train_data)
+    val_data_scaled = scaler.transform(val_data)
     # CPU training
     if config["cpu"]:
         logging.info("CPU Training")
         benchmark_data["cpu_training"] = {}
         benchmark_data["cpu_training"]["start"] = timer()
-        train_conv_net_cpu(train_data, train_counts, val_data, val_counts, config["conv_net_parameters"],
+        train_conv_net_cpu(train_data_scaled, train_counts, val_data_scaled, val_counts, config["conv_net_parameters"],
                            config["num_cpus"], config["random_seed"])
         benchmark_data["cpu_training"]["end"] = timer()
         benchmark_data["cpu_training"]["duration"] = benchmark_data["cpu_training"]["end"] - \
@@ -66,7 +70,7 @@ def main():
         logging.info("Single GPU Training")
         benchmark_data["gpu_1_training"] = {}
         benchmark_data["gpu_1_training"]["start"] = timer()
-        train_conv_net_gpu(train_data, train_counts, val_data, val_counts, config["conv_net_parameters"],
+        train_conv_net_gpu(train_data_scaled, train_counts, val_data_scaled, val_counts, config["conv_net_parameters"],
                            1, config["random_seed"])
         benchmark_data["gpu_1_training"]["end"] = timer()
         benchmark_data["gpu_1_training"]["duration"] = benchmark_data["gpu_1_training"]["end"] - \
@@ -78,7 +82,7 @@ def main():
         logging.info("Multi GPU Training")
         benchmark_data["gpu_m_training"] = {}
         benchmark_data["gpu_m_training"]["start"] = timer()
-        train_conv_net_gpu(train_data, train_counts, val_data, val_counts, config["conv_net_parameters"],
+        train_conv_net_gpu(train_data_scaled, train_counts, val_data_scaled, val_counts, config["conv_net_parameters"],
                            config["num_gpus"], config["random_seed"])
         benchmark_data["gpu_m_training"]["end"] = timer()
         benchmark_data["gpu_m_training"]["duration"] = benchmark_data["gpu_m_training"]["end"] - \

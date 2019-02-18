@@ -3,6 +3,7 @@ from keras.models import Model
 import keras.backend as K
 from keras.utils import multi_gpu_model
 import numpy as np
+import pandas as pd
 
 
 class StandardConvNet(object):
@@ -98,7 +99,7 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
 
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
-                       conv_net_hyperparameters, num_gpus, seed, cpu_relocation=True, cpu_merge=False):
+                       conv_net_hyperparameters, num_gpus, seed, cpu_relocation=True, cpu_merge=True):
     np.random.seed(seed)
     K.tf.set_random_seed(seed)
     config = K.tf.ConfigProto(allow_soft_placement=False)
@@ -120,3 +121,38 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
     sess.close()
     del sess
     return
+
+
+class MinMaxScaler2D(object):
+    """
+    Rescale input arrays of shape (examples, y, x, variable) to range from out_min to out_max.
+
+    """
+    def __init__(self, out_min=0, out_max=1, scale_values=None):
+        self.out_min = out_min
+        self.out_max = out_max
+        self.out_range = out_max - out_min
+        self.scale_values = scale_values
+
+    def fit(self, x, y=None):
+        vars = np.arange(x.shape[-1])
+        self.scale_values = pd.DataFrame(0, index=vars, columns=["min", "max"])
+        for v in vars:
+            self.scale_values.loc[v, "min"] = x[:, :, :, v].min()
+            self.scale_values.loc[v, "max"] = x[:, :, :, v].max()
+            self.scale_values.loc[v, "range"] = self.scale_values.loc[v, "max"] - self.scale_values.loc[v, "min"]
+
+    def transform(self, x):
+        if x.shape[-1] != self.scale_values.index.size:
+            raise ValueError("Input x does not have the correct number of variables")
+        x_new = np.zeros(x.shape, dtype=x.dtype)
+        for v in self.scale_values.index:
+            x_new[:, :, :, v] = (x[:, :, :, v] - self.scale_values.loc[v, "min"]) \
+                / (self.scale_values.loc[v, "range"])
+            if self.out_min != 0 or self.out_max != 1:
+                x_new[:, :, :, v] = x_new[:, :, :,v] * self.out_range + self.out_min
+        return x_new
+
+    def fit_transform(self, x, y=None):
+        self.fit(x, y)
+        return self.transform(x)
