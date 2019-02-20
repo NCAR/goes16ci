@@ -16,4 +16,5 @@ num_cpus: 1
 single_gpu: 1
 multi_gpu: 1
 num_gpus: 2
+dtype: "float16"
 random_seed: 4832

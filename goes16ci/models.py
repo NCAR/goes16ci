@@ -162,13 +162,14 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
 
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
-                       conv_net_hyperparameters, num_gpus, seed, cpu_relocation=True, cpu_merge=True):
+                       conv_net_hyperparameters, num_gpus, seed, dtype="float32", cpu_relocation=True, cpu_merge=True):
     np.random.seed(seed)
-    K.tf.set_random_seed(seed)
     config = K.tf.ConfigProto(allow_soft_placement=False)
     config.gpu_options.allow_growth = True
     sess = K.tf.Session(config=config)
     K.set_session(sess)
+    K.tf.set_random_seed(seed)
+    K.set_floatx(dtype)
     if num_gpus == 1:
         with K.tf.device("gpu:0"):
             scn = ResNet(**conv_net_hyperparameters)
