@@ -49,8 +49,8 @@ intersphinx_mapping = {
     'python': ('http://docs.python.org/3', None),
     'xarray': ('http://xarray.pydata.org/en/stable/', None),
     'pandas': ('http://pandas.pydata.org/pandas-docs/stable/', None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None)}
-
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'keras': ('https://keras.io', None)}
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

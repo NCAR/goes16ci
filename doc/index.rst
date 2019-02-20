@@ -25,10 +25,14 @@ goes16ci.lightning
 .. automodule:: goes16ci.lightning
    :members:
 
+goes16ci.models
+~~~~~~~~~~~~~~~
+.. automodule:: goes16ci.models
+    :members:
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
 
 
 Indices and tables

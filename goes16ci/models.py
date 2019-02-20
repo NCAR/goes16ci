@@ -9,6 +9,24 @@ import pandas as pd
 
 
 class StandardConvNet(object):
+    """
+    Standard Convolutional Neural Network contains a series of convolution and pooling layers followed by one
+    fully connected layer to a set of scalar outputs. The number of convolution filters is assumed to increase
+    with depth.
+    
+    Attributes:
+        min_filters (int): The number of convolution filters in the first layer. 
+        filter_growth_rate (float): Multiplier on the number of convolution filters between layers.
+        min_data_width (int): The minimum dimension of the input data after the final pooling layer. Constrains the number of 
+            convolutional layers.
+        hidden_activation (str): The nonlinear activation function applied after each convolutional layer. If "leaky", a leaky ReLU with
+            alpha=0.1 is used.
+        output_activation (str): The nonlinear activation function applied on the output layer.
+        pooling (str): If mean, then :class:`keras.layers.AveragePooling2D` is used for pooling. If max, then :class:`keras.layers.MaxPool2D` is used.
+        use_dropout (bool): If True, then a :class:`keras.layers.Dropout` layer is inserted between the final convolution block 
+            and the output :class:`keras.laysers.Dense` layer.
+
+    """
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid",
                  pooling="mean", use_dropout=False, dropout_alpha=0.0,
@@ -33,6 +51,13 @@ class StandardConvNet(object):
         self.verbose = verbose
 
     def build_network(self, input_shape, output_size):
+        """
+        Create a keras model with the hyperparameters specified in the constructor.
+
+        Args:
+            input_shape (tuple of shape [y, x, variables]): The shape of the input data
+            output_size: Number of neurons in output layer.
+        """
         input_layer = Input(shape=input_shape, name="scn_input")
         num_conv_layers = int(np.log2(input_shape[1]) - np.log2(self.min_data_width))
         num_filters = self.min_filters
@@ -57,6 +82,9 @@ class StandardConvNet(object):
         self.model = Model(input_layer, scn_model)
 
     def compile_model(self):
+        """
+        Compile the model in tensorflow with the right optimizer and loss function.
+        """
         if self.optimizer == "adam":
             opt = Adam(lr=self.learning_rate)
         else:
@@ -65,6 +93,9 @@ class StandardConvNet(object):
 
     @staticmethod
     def get_data_shapes(x, y):
+        """
+        Extract the input and output data shapes in order to construct the neural network.
+        """
         if len(x.shape) != 4:
             raise ValueError("Input data does not have dimensions (examples, y, x, predictor)")
         if len(y.shape) == 1:
@@ -74,6 +105,9 @@ class StandardConvNet(object):
         return x.shape[1:], output_size
 
     def fit(self, x, y, val_x=None, val_y=None, build=True):
+        """
+        Train the neural network.
+        """
         if build:
             x_shape, y_size = self.get_data_shapes(x, y)
             self.build_network(x_shape, y_size)
@@ -90,6 +124,10 @@ class StandardConvNet(object):
 
 
 class ResNet(StandardConvNet):
+    """
+    Extension of the :class:`goes16ci.models.StandardConvNet` to include Residual layers instead of single convolutional layers.
+    The residual layers split the data signal off, apply normalization and convolutions to it, then adds it back on to the original field.
+    """
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid",
                  pooling="mean", use_dropout=False, dropout_alpha=0.0, learning_rate=0.00001,
@@ -101,6 +139,9 @@ class ResNet(StandardConvNet):
                          batch_size=batch_size, epochs=epochs, verbose=verbose, learning_rate=learning_rate)
 
     def residual_block(self, filters, in_layer, layer_number=0):
+        """
+        Generate a single residual block.
+        """
         if in_layer.shape[-1].value != filters:
             x = Conv2D(filters, self.filter_width, padding="same")(in_layer)
         else:
@@ -153,7 +194,7 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
                                                 inter_op_parallelism_threads=num_processors))
     K.set_session(sess)
 
-    with K.tf.device("cpu:0"):
+    with K.tf.device("/cpu:0"):
         scn = StandardConvNet(**conv_net_hyperparameters)
         scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
     sess.close()
@@ -171,7 +212,7 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
     K.tf.set_random_seed(seed)
     K.set_floatx(dtype)
     if num_gpus == 1:
-        with K.tf.device("gpu:0"):
+        with K.tf.device("/gpu:0"):
             scn = ResNet(**conv_net_hyperparameters)
             #scn = StandardConvNet(**conv_net_hyperparameters)
             scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
@@ -204,6 +245,9 @@ class MinMaxScaler2D(object):
         self.scale_values = scale_values
 
     def fit(self, x, y=None):
+        """
+        Calculate the values for the min/max transformation.
+        """
         vars = np.arange(x.shape[-1])
         self.scale_values = pd.DataFrame(0, index=vars, columns=["min", "max"])
         for v in vars:
@@ -212,6 +256,9 @@ class MinMaxScaler2D(object):
             self.scale_values.loc[v, "range"] = self.scale_values.loc[v, "max"] - self.scale_values.loc[v, "min"]
 
     def transform(self, x):
+        """
+        Apply the min/max scaling transformation.
+        """
         if x.shape[-1] != self.scale_values.index.size:
             raise ValueError("Input x does not have the correct number of variables")
         x_new = np.zeros(x.shape, dtype=x.dtype)
