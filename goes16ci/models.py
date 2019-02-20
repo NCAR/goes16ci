@@ -1,4 +1,4 @@
-from keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, add
+from keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, Add
 from keras.layers import BatchNormalization
 from keras.models import Model
 from keras.optimizers import Adam, SGD
@@ -100,11 +100,11 @@ class ResNet(StandardConvNet):
                          dropout_alpha=dropout_alpha, optimizer=optimizer, loss=loss, leaky_alpha=leaky_alpha,
                          batch_size=batch_size, epochs=epochs, verbose=verbose, learning_rate=learning_rate)
 
-    def residual_block(self, filters, input_layer, layer_number=0):
-        if input_layer.shape[-1].value != filters:
-            x = Conv2D(filters, self.filter_width, padding="same")(input_layer)
+    def residual_block(self, filters, in_layer, layer_number=0):
+        if in_layer.shape[-1].value != filters:
+            x = Conv2D(filters, self.filter_width, padding="same")(in_layer)
         else:
-            x = input_layer
+            x = in_layer
         y = BatchNormalization(name="bn_res_{0:02d}_a".format(layer_number))(x)
         if self.hidden_activation == "leaky":
             y = LeakyReLU(self.leaky_alpha, name="res_activation_{0:02d}_a".format(layer_number))(y)
@@ -121,12 +121,13 @@ class ResNet(StandardConvNet):
                            name="res_activation_{0:02d}_b".format(layer_number))(y)
         y = Conv2D(filters, self.filter_width, padding="same",
                    name="res_conv_{0:02d}_b".format(layer_number))(y)
-        out = add([y, x])
+        out = Add()([y, x])
         return out
 
     def build_network(self, input_shape, output_size):
         input_layer = Input(shape=input_shape, name="scn_input")
         num_conv_layers = int(np.log2(input_shape[1]) - np.log2(self.min_data_width))
+        print(num_conv_layers)
         num_filters = self.min_filters
         res_model = input_layer
         for c in range(num_conv_layers):
@@ -173,14 +174,17 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
             scn = ResNet(**conv_net_hyperparameters)
             #scn = StandardConvNet(**conv_net_hyperparameters)
             scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+            print(scn.model.summary())
     elif num_gpus > 1:
         scn = ResNet(**conv_net_hyperparameters)
         scn.batch_size *= num_gpus
         #scn = StandardConvNet(**conv_net_hyperparameters)
         x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
         scn.build_network(x_shape, y_size)
+        print(scn.model.summary())
         scn.model = multi_gpu_model(scn.model, gpus=num_gpus, cpu_merge=cpu_merge, cpu_relocation=cpu_relocation)
         scn.compile_model()
+        print(scn.model.summary())
         scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
     sess.close()
     del sess
