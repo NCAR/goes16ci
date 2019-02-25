@@ -1,6 +1,6 @@
 from keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, Add
 from keras.layers import BatchNormalization
-from keras.models import Model
+from keras.models import Model, save_model
 from keras.optimizers import Adam, SGD
 import keras.backend as K
 from keras.utils import multi_gpu_model
@@ -30,7 +30,7 @@ class StandardConvNet(object):
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid",
                  pooling="mean", use_dropout=False, dropout_alpha=0.0,
-                 optimizer="adam", loss="mse", leaky_alpha=0.1, 
+                 optimizer="adam", loss="mse", leaky_alpha=0.1, metrics=None, 
                  learning_rate=0.00001, batch_size=256, epochs=10, verbose=0):
         self.min_filters = min_filters
         self.filter_width = filter_width
@@ -44,6 +44,7 @@ class StandardConvNet(object):
         self.optimizer = optimizer
         self.learning_rate = learning_rate
         self.loss = loss
+        self.metrics = metrics
         self.leaky_alpha = leaky_alpha
         self.batch_size = batch_size
         self.epochs = epochs
@@ -89,7 +90,7 @@ class StandardConvNet(object):
             opt = Adam(lr=self.learning_rate)
         else:
             opt = SGD(lr=self.learning_rate, momentum=0.99)
-        self.model.compile(opt, self.loss)
+        self.model.compile(opt, self.loss, metrics=self.metrics)
 
     @staticmethod
     def get_data_shapes(x, y):
@@ -129,13 +130,13 @@ class ResNet(StandardConvNet):
     The residual layers split the data signal off, apply normalization and convolutions to it, then adds it back on to the original field.
     """
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
-                 hidden_activation="relu", output_activation="sigmoid",
+                 hidden_activation="relu", output_activation="sigmoid", metrics=None,
                  pooling="mean", use_dropout=False, dropout_alpha=0.0, learning_rate=0.00001,
                  optimizer="adam", loss="mse", leaky_alpha=0.1, batch_size=256, epochs=10, verbose=0):
         super().__init__(min_filters=min_filters, filter_growth_rate=filter_growth_rate, filter_width=filter_width,
                          min_data_width=min_data_width, hidden_activation=hidden_activation,
                          output_activation=output_activation, pooling=pooling, use_dropout=use_dropout,
-                         dropout_alpha=dropout_alpha, optimizer=optimizer, loss=loss, leaky_alpha=leaky_alpha,
+                         dropout_alpha=dropout_alpha, optimizer=optimizer, loss=loss, metrics=metrics, leaky_alpha=leaky_alpha,
                          batch_size=batch_size, epochs=epochs, verbose=verbose, learning_rate=learning_rate)
 
     def residual_block(self, filters, in_layer, layer_number=0):
@@ -203,7 +204,7 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
 
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
-                       conv_net_hyperparameters, num_gpus, seed, dtype="float32", cpu_relocation=True, cpu_merge=True):
+                       conv_net_hyperparameters, num_gpus, seed, dtype="float32", cpu_relocation=True, cpu_merge=False):
     np.random.seed(seed)
     config = K.tf.ConfigProto(allow_soft_placement=False)
     config.gpu_options.allow_growth = True
@@ -228,6 +229,7 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         scn.compile_model()
         print(scn.model.summary())
         scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+    save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus)) 
     sess.close()
     del sess
     return

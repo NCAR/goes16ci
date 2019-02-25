@@ -33,14 +33,14 @@ def main():
         all_data[:, :, :, v][np.isnan(all_data[:, :, :, v])] = np.nanmin(all_data[:, :, :, v])
     #del all_data, all_counts, all_time
     # load data parallel
-    logging.info("Begin parallel load data")
-    benchmark_data["load_data_parallel"] = {}
-    benchmark_data["load_data_parallel"]["processes"] = config["parallel_processes"]
-    benchmark_data["load_data_parallel"]["start"] = timer()
+   # logging.info("Begin parallel load data")
+   # benchmark_data["load_data_parallel"] = {}
+   # benchmark_data["load_data_parallel"]["processes"] = config["parallel_processes"]
+   # benchmark_data["load_data_parallel"]["start"] = timer()
    # all_data, all_counts, all_time = load_data_parallel(config["data_path"], config["parallel_processes"])
-    benchmark_data["load_data_parallel"]["end"] = timer()
-    benchmark_data["load_data_parallel"]["duration"] = benchmark_data["load_data_parallel"]["end"] - \
-        benchmark_data["load_data_parallel"]["start"]
+   # benchmark_data["load_data_parallel"]["end"] = timer()
+   # benchmark_data["load_data_parallel"]["duration"] = benchmark_data["load_data_parallel"]["end"] - \
+   #     benchmark_data["load_data_parallel"]["start"]
     # Split training and validation data
     logging.info("Split training and testing data")
     train_indices = np.where(all_time < pd.Timestamp(config["split_date"]))[0]

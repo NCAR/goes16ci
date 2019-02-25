@@ -11,10 +11,12 @@ conv_net_parameters:
   epochs: 3
   learning_rate: 0.0001
   batch_size: 128
+  loss: "binary_crossentropy"
+  metrics: ["mean_squared_error"]
 cpu: 0
 num_cpus: 1
 single_gpu: 1
 multi_gpu: 1
 num_gpus: 2
-dtype: "float16"
+dtype: "float32"
 random_seed: 4832
