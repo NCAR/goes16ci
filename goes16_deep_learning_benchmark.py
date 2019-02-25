@@ -51,8 +51,9 @@ def main():
     val_counts = np.where(all_counts[val_indices] > 0, 1, 0).astype(config["dtype"])
     # Rescale training and validation data
     scaler = MinMaxScaler2D()
-    train_data_scaled = scaler.fit_transform(train_data)
-    val_data_scaled = scaler.transform(val_data)
+    train_data_scaled = 1.0 - scaler.fit_transform(train_data)
+    val_data_scaled = 1.0 - scaler.transform(val_data)
+    print(scaler.scale_values)
     # CPU training
     if config["cpu"]:
         logging.info("CPU Training")

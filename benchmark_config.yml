@@ -8,7 +8,7 @@ conv_net_parameters:
   use_dropout: 0
   dropout_alpha: 0.1
   verbose: 1
-  epochs: 3
+  epochs: 10
   learning_rate: 0.0001
   batch_size: 128
   loss: "binary_crossentropy"
