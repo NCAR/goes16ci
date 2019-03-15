@@ -6,6 +6,9 @@ from dask.distributed import LocalCluster, Client, as_completed, wait
 import argparse
 import yaml
 import traceback
+from os.path import exists
+from os import makedirs
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -34,6 +37,8 @@ def main():
         dx_km = glm_config["dx_km"]
         x_extent_km = glm_config["x_extent_km"]
         y_extent_km = glm_config["y_extent_km"]
+        if not exists(grid_path):
+            makedirs(grid_path)
         glm_jobs = []
         for date in glm_file_dates:
             print(date, flush=True)
@@ -61,6 +66,8 @@ def main():
         samples_per_time = abi_config["samples_per_time"]
         time_range_minutes = abi_config["time_range_minutes"]
         bt = bool(abi_config["bt"])
+        if not exists(patch_path):
+            makedirs(patch_path)
         abi_file_dates = pd.DatetimeIndex(pd.date_range(start=start_date, end=end_date, freq=file_freq))
         abi_jobs = []
         for date in abi_file_dates:

@@ -11,10 +11,9 @@
 #SBATCH --mail-user=dgagne
 module purge
 export HOME="/glade/u/home/dgagne"
-module load gnu/7.3.0 openmpi-x/3.1.0 python/3.6.4 cuda
-ncar_pylib 20180801-DL
-export PYTHONPATH="/glade/u/home/dgagne/.local/lib/python3.6/site-packages/"
+module load gnu/7.3.0 openmpi-x/3.1.0 python/3.6.4 cuda netcdf
+source /glade/work/dgagne/ncar_pylib_dl/bin/activate
 cd $HOME/goes16ci
-python setup.py install --user
+python setup.py install
 cd $HOME/goes16ci/scripts
 python -u process_goes16.py goes16_process_config.yml -n 36 -a 

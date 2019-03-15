@@ -236,7 +236,8 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
                                                                                 bt=bt)
             goes16_abi_timestep.close()
             del goes16_abi_timestep
-        except FileNotFoundError:
+        except FileNotFoundError as fnfe:
+            print(fnfe.args[1])
             patch_times.extend([np.nan] * samples_per_time)
     x_coords = np.arange(patch_x_length_pixels)
     y_coords = np.arange(patch_y_length_pixels)
