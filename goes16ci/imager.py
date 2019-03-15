@@ -123,7 +123,7 @@ class GOES16ABI(object):
         self.lon[self.lon > 1e10] = np.nan
         self.lat[self.lat > 1e10] = np.nan
 
-    def extract_image_patch(self, center_lon, center_lat, x_size_pixels, y_size_pixels):
+    def extract_image_patch(self, center_lon, center_lat, x_size_pixels, y_size_pixels, bt=True):
         """
         Extract a subset of a satellite image around a given location.
 
@@ -132,7 +132,7 @@ class GOES16ABI(object):
             center_lat (float): latitude of the center pixel of the image
             x_size_pixels (int): number of pixels in the west-east direction
             y_size_pixels (int): number of pixels in the south-north direction
-
+            bt (bool): Convert to brightness temperature during extraction
         Returns:
 
         """
@@ -141,9 +141,15 @@ class GOES16ABI(object):
         center_col = np.argmin(np.abs(self.x - center_x))
         row_slice = slice(int(center_row - y_size_pixels // 2), int(center_row + y_size_pixels // 2))
         col_slice = slice(int(center_col - x_size_pixels // 2), int(center_col + x_size_pixels // 2))
-        patch = np.zeros((1, y_size_pixels, x_size_pixels, self.bands.size), dtype=np.float32)
+        patch = np.zeros((1, self.bands.size, y_size_pixels, x_size_pixels), dtype=np.float32)
         for b, band in enumerate(self.bands):
-            patch[0, :, :, b] = self.goes16_ds[band]["Rad"][row_slice, col_slice].values
+            if bt:
+                patch[0, b, :, :] = (self.goes16_ds[band]["planck_fk2"].values /
+                                     np.log(self.goes16_ds[band]["planck_fk1"].values /
+                                            self.goes16_ds[band]["Rad"][row_slice, col_slice].values + 1) -
+                                     self.goes16_ds[band]["planck_bc1"].values) / self.goes16_ds[band]["planck_bc2"].values
+            else:
+                patch[0, b, :, :] = self.goes16_ds[band]["Rad"][row_slice, col_slice].values
         lons = self.lon[row_slice, col_slice]
         lats = self.lat[row_slice, col_slice]
         return patch, lons, lats
@@ -156,7 +162,8 @@ class GOES16ABI(object):
 
 def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, bands,
                         lead_time, patch_x_length_pixels, patch_y_length_pixels, samples_per_time,
-                        glm_file_freq="1D", max_pos_sample_ratio=0.5, glm_date_format="%Y%m%dT%H%M%S"):
+                        glm_file_freq="1D", max_pos_sample_ratio=0.5, glm_date_format="%Y%m%dT%H%M%S",
+                        time_range_minutes=4, bt=False):
     """
     For a given set of gridded GLM counts, sample from the grids at each time step and extract ABI
     patches centered on the lightning grid cell.
@@ -173,6 +180,8 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
         samples_per_time (int): Number of grid points to select without replacement at each timestep
         glm_file_freq (str): How ofter GLM files are use
         glm_date_format (str): How the GLM date is formatted
+        time_range_minutes (int): Minutes before or after time in which GOES16 files are valid.
+        bt (bool): Calculate brightness temperature instead of radiance
 
     Returns:
 
@@ -205,34 +214,41 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
         neg_sample_size = samples_per_time - pos_sample_size
         count_grid = counts[t].values
         if pos_sample_size > 0:
-            pos_time_samples = np.random.choice(grid_sample_indices[count_grid.ravel() > 0], size=pos_sample_size, replace=False)
-            neg_time_samples = np.random.choice(grid_sample_indices[count_grid.ravel() == 0], size=neg_sample_size, replace=False)
+            pos_time_samples = np.random.choice(grid_sample_indices[count_grid.ravel() > 0], size=pos_sample_size,
+                                                replace=False)
+            neg_time_samples = np.random.choice(grid_sample_indices[count_grid.ravel() == 0], size=neg_sample_size,
+                                                replace=False)
             time_samples = np.concatenate([pos_time_samples, neg_time_samples])
         else:
             time_samples = np.random.choice(grid_sample_indices, size=samples_per_time, replace=False)
         sample_rows, sample_cols = np.unravel_index(time_samples, lons.shape)
-        goes16_abi_timestep = GOES16ABI(patch_time, bands, abi_path, time_range_minutes=11)
-        patch_times.extend([time] * samples_per_time)
-        for s in range(samples_per_time):
-            flash_counts[t * s] = count_grid[sample_rows[s], sample_cols[s]]
-            patches[t * s], \
-                patch_lons[t * s], \
-                patch_lats[t * s] = goes16_abi_timestep.extract_image_patch(lons[sample_rows[s], sample_cols[s]],
-                                                                            lats[sample_rows[s], sample_cols[s]],
-                                                                            patch_x_length_pixels,
-                                                                            patch_y_length_pixels)
-        goes16_abi_timestep.close()
-        del goes16_abi_timestep
+        try:
+            goes16_abi_timestep = GOES16ABI(patch_time, bands, abi_path, time_range_minutes=time_range_minutes)
+            patch_times.extend([time] * samples_per_time)
+            for s in range(samples_per_time):
+                flash_counts[t * s] = count_grid[sample_rows[s], sample_cols[s]]
+                patches[t * s], \
+                    patch_lons[t * s], \
+                    patch_lats[t * s] = goes16_abi_timestep.extract_image_patch(lons[sample_rows[s], sample_cols[s]],
+                                                                                lats[sample_rows[s], sample_cols[s]],
+                                                                                patch_x_length_pixels,
+                                                                                patch_y_length_pixels,
+                                                                                bt=bt)
+            goes16_abi_timestep.close()
+            del goes16_abi_timestep
+        except FileNotFoundError:
+            patch_times.extend([np.nan] * samples_per_time)
     x_coords = np.arange(patch_x_length_pixels)
     y_coords = np.arange(patch_y_length_pixels)
-    patch_num = np.arange(patches.shape[0])
+    valid_patches = np.where(~np.isnan(patch_times))[0]
+    patch_num = np.arange(valid_patches.shape[0])
     glm_ds.close()
     del glm_ds
-    patch_ds = xr.Dataset(data_vars={"abi": (("patch", "y", "x", "band"), patches),
-                                     "time": (("patch", ), pd.DatetimeIndex(patch_times)),
-                                     "lon": (("patch", "y", "x"), patch_lons),
-                                     "lat": (("patch", "y", "x"), patch_lats),
-                                     "flash_counts": (("patch", ), flash_counts)},
+    patch_ds = xr.Dataset(data_vars={"abi": (("patch", "band", "y", "x"), patches[valid_patches]),
+                                     "time": (("patch", ), pd.DatetimeIndex(patch_times)[valid_patches]),
+                                     "lon": (("patch", "y", "x"), patch_lons[valid_patches]),
+                                     "lat": (("patch", "y", "x"), patch_lats[valid_patches]),
+                                     "flash_counts": (("patch", ), flash_counts[valid_patches])},
                           coords={"patch": patch_num,
                                   "y": y_coords, "x": x_coords, "band": bands})
     out_file = join(patch_path, "abi_patches_{0}.nc".format(glm_file_date.strftime(glm_date_format)))
@@ -240,7 +256,8 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
         makedirs(patch_path)
     patch_ds.to_netcdf(out_file,
                        engine="netcdf4",
-                       encoding={"abi": {"zlib": True}, "lon": {"zlib": True}, "lat": {"zlib": True}})
+                       encoding={"abi": {"zlib": True}, "lon": {"zlib": True}, "lat": {"zlib": True},
+                                 "flash_counts": {"zlib": True}})
     return 0
 
 

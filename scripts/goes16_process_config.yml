@@ -16,14 +16,15 @@ glm:
   y_extent_km: 2048.0 # south-north extent of grid in km
 abi:
   abi_path: "/glade/p/cisl/aiml/dgagne/goes16_nc/ABI-L1b_conus/"
-  patch_path: "/glade/p/cisl/aiml/dgagne/goes16_nc/ABI_patches/"
+  patch_path: "/glade/p/cisl/aiml/dgagne/goes16_nc/ABI_patches_20190315/"
   glm_grid_path: "/glade/p/cisl/aiml/dgagne/goes16_nc/GLM_grids/"
   start_date: "2018-04-02"
   end_date: "2018-06-06"
   bands: [8, 9, 10, 14]
   file_freq: "1D"
-  lead_time: "30Min"
+  lead_time: "20Min"
   patch_x_length_pixels: 64
   patch_y_length_pixels: 64
   samples_per_time: 20
+  time_range_minutes: 4
 

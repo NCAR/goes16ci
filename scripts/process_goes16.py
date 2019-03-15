@@ -59,12 +59,14 @@ def main():
         patch_x_length_pixels = abi_config["patch_x_length_pixels"]
         patch_y_length_pixels = abi_config["patch_y_length_pixels"]
         samples_per_time = abi_config["samples_per_time"]
+        time_range_minutes = abi_config["time_range_minutes"]
+        bt = bool(abi_config["bt"])
         abi_file_dates = pd.DatetimeIndex(pd.date_range(start=start_date, end=end_date, freq=file_freq))
         abi_jobs = []
         for date in abi_file_dates:
             abi_jobs.append(client.submit(extract_abi_patches, abi_path, patch_path, glm_grid_path, date, bands,
                                           lead_time, patch_x_length_pixels, patch_y_length_pixels, samples_per_time,
-                                          glm_file_freq=file_freq))
+                                          time_range_minutes=time_range_minutes, glm_file_freq=file_freq, bt=bt))
        # for abi_job in as_completed(abi_jobs):
        #     res = abi_job.result()
        #     if abi_job.status == "error":
