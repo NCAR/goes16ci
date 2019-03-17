@@ -30,7 +30,7 @@ class StandardConvNet(object):
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid",
                  pooling="mean", use_dropout=False, dropout_alpha=0.0,
-                 optimizer="adam", loss="mse", leaky_alpha=0.1, metrics=None, 
+                 data_format="channels_first", optimizer="adam", loss="mse", leaky_alpha=0.1, metrics=None, 
                  learning_rate=0.00001, batch_size=256, epochs=10, verbose=0):
         self.min_filters = min_filters
         self.filter_width = filter_width
@@ -41,6 +41,7 @@ class StandardConvNet(object):
         self.use_dropout = use_dropout
         self.pooling = pooling
         self.dropout_alpha = dropout_alpha
+        self.data_format = data_format
         self.optimizer = optimizer
         self.learning_rate = learning_rate
         self.loss = loss
@@ -56,7 +57,7 @@ class StandardConvNet(object):
         Create a keras model with the hyperparameters specified in the constructor.
 
         Args:
-            input_shape (tuple of shape [y, x, variables]): The shape of the input data
+            input_shape (tuple of shape [variable, y, x]): The shape of the input data
             output_size: Number of neurons in output layer.
         """
         input_layer = Input(shape=input_shape, name="scn_input")
@@ -65,16 +66,16 @@ class StandardConvNet(object):
         scn_model = input_layer
         for c in range(num_conv_layers):
             scn_model = Conv2D(num_filters, (self.filter_width, self.filter_width),
-                               padding="same", name="conv_{0:02d}".format(c))(scn_model)
+                               data_format=self.data_format, padding="same", name="conv_{0:02d}".format(c))(scn_model)
             if self.hidden_activation == "leaky":
                 scn_model = LeakyReLU(self.leaky_alpha, name="hidden_activation_{0:02d}".format(c))(scn_model)
             else:
                 scn_model = Activation(self.hidden_activation, name="hidden_activation_{0:02d}".format(c))(scn_model)
             num_filters = int(num_filters * self.filter_growth_rate)
             if self.pooling.lower() == "max":
-                scn_model = MaxPool2D(name="pooling_{0:02d}".format(c))(scn_model)
+                scn_model = MaxPool2D(data_format=self.data_format, name="pooling_{0:02d}".format(c))(scn_model)
             else:
-                scn_model = AveragePooling2D(name="pooling_{0:02d}".format(c))(scn_model)
+                scn_model = AveragePooling2D(data_format=self.data_format, name="pooling_{0:02d}".format(c))(scn_model)
         scn_model = Flatten(name="flatten")(scn_model)
         if self.use_dropout:
             scn_model = Dropout(self.dropout_alpha, name="dense_dropout")(scn_model)
@@ -131,10 +132,10 @@ class ResNet(StandardConvNet):
     """
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid", metrics=None,
-                 pooling="mean", use_dropout=False, dropout_alpha=0.0, learning_rate=0.00001,
+                 pooling="mean", use_dropout=False, dropout_alpha=0.0, data_format="channels_first", learning_rate=0.00001,
                  optimizer="adam", loss="mse", leaky_alpha=0.1, batch_size=256, epochs=10, verbose=0):
         super().__init__(min_filters=min_filters, filter_growth_rate=filter_growth_rate, filter_width=filter_width,
-                         min_data_width=min_data_width, hidden_activation=hidden_activation,
+                         min_data_width=min_data_width, hidden_activation=hidden_activation, data_format=data_format,
                          output_activation=output_activation, pooling=pooling, use_dropout=use_dropout,
                          dropout_alpha=dropout_alpha, optimizer=optimizer, loss=loss, metrics=metrics, leaky_alpha=leaky_alpha,
                          batch_size=batch_size, epochs=epochs, verbose=verbose, learning_rate=learning_rate)
@@ -143,26 +144,30 @@ class ResNet(StandardConvNet):
         """
         Generate a single residual block.
         """
+        if self.data_format == "channels_first":
+            norm_axis = 1
+        else:
+            norm_axis = -1
         if in_layer.shape[-1].value != filters:
-            x = Conv2D(filters, self.filter_width, padding="same")(in_layer)
+            x = Conv2D(filters, self.filter_width, data_format=self.data_format, padding="same")(in_layer)
         else:
             x = in_layer
-        y = BatchNormalization(name="bn_res_{0:02d}_a".format(layer_number))(x)
+        y = BatchNormalization(axis=norm_axis, name="bn_res_{0:02d}_a".format(layer_number))(x)
         if self.hidden_activation == "leaky":
             y = LeakyReLU(self.leaky_alpha, name="res_activation_{0:02d}_a".format(layer_number))(y)
         else:
             y = Activation(self.hidden_activation,
                            name="res_activation_{0:02d}_a".format(layer_number))(y)
         y = Conv2D(filters, self.filter_width, padding="same",
-                   name="res_conv_{0:02d}_a".format(layer_number))(y)
-        y = BatchNormalization(name="bn_res_{0:02d}_b".format(layer_number))(y)
+                   data_format=self.data_format, name="res_conv_{0:02d}_a".format(layer_number))(y)
+        y = BatchNormalization(axis=norm_axis, name="bn_res_{0:02d}_b".format(layer_number))(y)
         if self.hidden_activation == "leaky":
             y = LeakyReLU(self.leaky_alpha, name="res_activation_{0:02d}_b".format(layer_number))(y)
         else:
             y = Activation(self.hidden_activation,
                            name="res_activation_{0:02d}_b".format(layer_number))(y)
         y = Conv2D(filters, self.filter_width, padding="same",
-                   name="res_conv_{0:02d}_b".format(layer_number))(y)
+                   data_format=self.data_format, name="res_conv_{0:02d}_b".format(layer_number))(y)
         out = Add()([y, x])
         return out
 
@@ -176,9 +181,9 @@ class ResNet(StandardConvNet):
             res_model = self.residual_block(num_filters, res_model, c)
             num_filters = int(num_filters * self.filter_growth_rate)
             if self.pooling.lower() == "max":
-                res_model = MaxPool2D(name="pooling_{0:02d}".format(c))(res_model)
+                res_model = MaxPool2D(data_format=self.data_format, name="pooling_{0:02d}".format(c))(res_model)
             else:
-                res_model = AveragePooling2D(name="pooling_{0:02d}".format(c))(res_model)
+                res_model = AveragePooling2D(data_format=self.data_format, name="pooling_{0:02d}".format(c))(res_model)
         res_model = Flatten(name="flatten")(res_model)
         if self.use_dropout:
             res_model = Dropout(self.dropout_alpha, name="dense_dropout")(res_model)
@@ -250,25 +255,25 @@ class MinMaxScaler2D(object):
         """
         Calculate the values for the min/max transformation.
         """
-        vars = np.arange(x.shape[-1])
-        self.scale_values = pd.DataFrame(0, index=vars, columns=["min", "max"])
-        for v in vars:
-            self.scale_values.loc[v, "min"] = x[:, :, :, v].min()
-            self.scale_values.loc[v, "max"] = x[:, :, :, v].max()
+        variables = np.arange(x.shape[1])
+        self.scale_values = pd.DataFrame(0, index=variables, columns=["min", "max"])
+        for v in variables:
+            self.scale_values.loc[v, "min"] = x[:, v].min()
+            self.scale_values.loc[v, "max"] = x[:, v].max()
             self.scale_values.loc[v, "range"] = self.scale_values.loc[v, "max"] - self.scale_values.loc[v, "min"]
 
     def transform(self, x):
         """
         Apply the min/max scaling transformation.
         """
-        if x.shape[-1] != self.scale_values.index.size:
+        if x.shape[1] != self.scale_values.index.size:
             raise ValueError("Input x does not have the correct number of variables")
         x_new = np.zeros(x.shape, dtype=x.dtype)
         for v in self.scale_values.index:
-            x_new[:, :, :, v] = (x[:, :, :, v] - self.scale_values.loc[v, "min"]) \
+            x_new[:, v] = (x[:, v] - self.scale_values.loc[v, "min"]) \
                 / (self.scale_values.loc[v, "range"])
             if self.out_min != 0 or self.out_max != 1:
-                x_new[:, :, :, v] = x_new[:, :, :,v] * self.out_range + self.out_min
+                x_new[:, v] = x_new[:, v] * self.out_range + self.out_min
         return x_new
 
     def fit_transform(self, x, y=None):

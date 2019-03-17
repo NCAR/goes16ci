@@ -29,8 +29,6 @@ def main():
     all_data, all_counts, all_time = load_data_serial(config["data_path"])
     benchmark_data["load_data_serial"]["end"] = timer()
     benchmark_data["load_data_serial"]["duration"] = benchmark_data["load_data_serial"]["end"] - benchmark_data["load_data_serial"]["start"]
-    for v in range(all_data.shape[-1]):
-        all_data[:, :, :, v][np.isnan(all_data[:, :, :, v])] = np.nanmin(all_data[:, :, :, v])
     #del all_data, all_counts, all_time
     # load data parallel
    # logging.info("Begin parallel load data")
@@ -49,6 +47,8 @@ def main():
     val_data = all_data[val_indices].astype(config["dtype"])
     train_counts = np.where(all_counts[train_indices] > 0, 1, 0).astype(config["dtype"])
     val_counts = np.where(all_counts[val_indices] > 0, 1, 0).astype(config["dtype"])
+    print(train_counts.sum(), train_counts.shape[0] - train_counts.sum())
+    print(val_counts.sum(), val_counts.shape[0] - val_counts.sum())
     # Rescale training and validation data
     scaler = MinMaxScaler2D()
     train_data_scaled = 1.0 - scaler.fit_transform(train_data)

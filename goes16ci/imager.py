@@ -196,7 +196,7 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
     lons = glm_ds["lon"]
     lats = glm_ds["lat"]
     counts = glm_ds["lightning_counts"]
-    patches = np.zeros((times.size * samples_per_time, patch_y_length_pixels, patch_x_length_pixels, bands.size),
+    patches = np.zeros((times.size * samples_per_time, bands.size, patch_y_length_pixels, patch_x_length_pixels),
                        dtype=np.float32)
     patch_lons = np.zeros((times.size * samples_per_time, patch_y_length_pixels, patch_x_length_pixels),
                           dtype=np.float32)
@@ -205,6 +205,7 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
     flash_counts = np.zeros((times.size * samples_per_time), dtype=np.int32)
     grid_sample_indices = np.arange(lons.size, dtype=np.int32)
     max_pos_counts = int(samples_per_time * max_pos_sample_ratio)
+    is_valid = np.ones((times.size * samples_per_time), dtype=bool)
     patch_times = []
     for t, time in enumerate(times):
         print(time, flush=True)
@@ -222,14 +223,14 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
         else:
             time_samples = np.random.choice(grid_sample_indices, size=samples_per_time, replace=False)
         sample_rows, sample_cols = np.unravel_index(time_samples, lons.shape)
+        patch_times.extend([time] * samples_per_time)
         try:
             goes16_abi_timestep = GOES16ABI(patch_time, bands, abi_path, time_range_minutes=time_range_minutes)
-            patch_times.extend([time] * samples_per_time)
             for s in range(samples_per_time):
-                flash_counts[t * s] = count_grid[sample_rows[s], sample_cols[s]]
-                patches[t * s], \
-                    patch_lons[t * s], \
-                    patch_lats[t * s] = goes16_abi_timestep.extract_image_patch(lons[sample_rows[s], sample_cols[s]],
+                flash_counts[t * samples_per_time + s] = count_grid[sample_rows[s], sample_cols[s]]
+                patches[t * samples_per_time + s], \
+                    patch_lons[t * samples_per_time + s], \
+                    patch_lats[t * samples_per_time + s] = goes16_abi_timestep.extract_image_patch(lons[sample_rows[s], sample_cols[s]],
                                                                                 lats[sample_rows[s], sample_cols[s]],
                                                                                 patch_x_length_pixels,
                                                                                 patch_y_length_pixels,
@@ -237,11 +238,11 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
             goes16_abi_timestep.close()
             del goes16_abi_timestep
         except FileNotFoundError as fnfe:
-            print(fnfe.args[1])
-            patch_times.extend([np.nan] * samples_per_time)
+            print(fnfe.args)
+            is_valid[t*samples_per_time: t * samples_per_time + samples_per_time] = False 
     x_coords = np.arange(patch_x_length_pixels)
     y_coords = np.arange(patch_y_length_pixels)
-    valid_patches = np.where(~np.isnan(patch_times))[0]
+    valid_patches = np.where(is_valid)[0]
     patch_num = np.arange(valid_patches.shape[0])
     glm_ds.close()
     del glm_ds

@@ -9,10 +9,14 @@ import logging
 def load_single_data_file(filename, image_variable="abi", count_variable="flash_counts", time_variable="time"):
     ds = xr.open_dataset(filename)
     imagery = ds.variables[image_variable].values
-    counts = ds.variables[count_variable].values
-    time = ds.variables[time_variable].values
+    nan_indices = np.unique(np.where(np.isnan(imagery))[0])
+    all_indices = np.arange(imagery.shape[0])
+    valid_indices = all_indices[np.isin(all_indices, nan_indices, assume_unique=True, invert=True)]
+    good_imagery = imagery[valid_indices]
+    counts = ds.variables[count_variable][valid_indices].values
+    time = ds.variables[time_variable][valid_indices].values
     ds.close()
-    return imagery, counts, time
+    return good_imagery, counts, time
 
 
 def load_data_serial(data_path, image_variable="abi", count_variable="flash_counts", time_variable="time"):

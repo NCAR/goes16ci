@@ -27,4 +27,4 @@ abi:
   patch_y_length_pixels: 64
   samples_per_time: 20
   time_range_minutes: 4
-
+  bt: 1

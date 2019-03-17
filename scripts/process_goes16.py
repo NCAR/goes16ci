@@ -70,17 +70,23 @@ def main():
             makedirs(patch_path)
         abi_file_dates = pd.DatetimeIndex(pd.date_range(start=start_date, end=end_date, freq=file_freq))
         abi_jobs = []
-        for date in abi_file_dates:
-            abi_jobs.append(client.submit(extract_abi_patches, abi_path, patch_path, glm_grid_path, date, bands,
-                                          lead_time, patch_x_length_pixels, patch_y_length_pixels, samples_per_time,
-                                          time_range_minutes=time_range_minutes, glm_file_freq=file_freq, bt=bt))
-       # for abi_job in as_completed(abi_jobs):
-       #     res = abi_job.result()
-       #     if abi_job.status == "error":
-       #         print(traceback.format_tb(res[-1]),flush=True)
-        wait(abi_jobs)
-        abi_results = client.gather(abi_jobs)
-        del abi_jobs[:]
+        if args.nprocs > 1:
+            for date in abi_file_dates:
+                abi_jobs.append(client.submit(extract_abi_patches, abi_path, patch_path, glm_grid_path, date, bands,
+                                            lead_time, patch_x_length_pixels, patch_y_length_pixels, samples_per_time,
+                                            time_range_minutes=time_range_minutes, glm_file_freq=file_freq, bt=bt))
+        # for abi_job in as_completed(abi_jobs):
+        #     res = abi_job.result()
+        #     if abi_job.status == "error":
+        #         print(traceback.format_tb(res[-1]),flush=True)
+            wait(abi_jobs)
+            abi_results = client.gather(abi_jobs)
+            del abi_jobs[:]
+        else:
+            for date in abi_file_dates:
+                extract_abi_patches(abi_path, patch_path, glm_grid_path, date, bands,
+                                    lead_time, patch_x_length_pixels, patch_y_length_pixels, samples_per_time,
+                                    time_range_minutes=time_range_minutes, glm_file_freq=file_freq, bt=bt)
     client.close()
     return
 
