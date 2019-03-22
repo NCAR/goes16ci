@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from goes16ci.data import load_data_parallel, load_data_serial
 from goes16ci.models import train_conv_net_cpu, train_conv_net_gpu, MinMaxScaler2D
-from timeit import default_timer as timer
+from time import perf_counter, process_time
 import argparse
 import logging
 from datetime import datetime
@@ -25,10 +25,14 @@ def main():
     # load data serial
     logging.info("Begin serial load data")
     benchmark_data["load_data_serial"] = {}
-    benchmark_data["load_data_serial"]["start"] = timer()
+    benchmark_data["load_data_serial"]["elapsed_start"] = perf_counter()
+    benchmark_data["load_data_serial"]["process_start"] = process_time()
     all_data, all_counts, all_time = load_data_serial(config["data_path"])
-    benchmark_data["load_data_serial"]["end"] = timer()
-    benchmark_data["load_data_serial"]["duration"] = benchmark_data["load_data_serial"]["end"] - benchmark_data["load_data_serial"]["start"]
+    benchmark_data["load_data_serial"]["elapsed_end"] = perf_counter()
+    benchmark_data["load_data_serial"]["process_end"] = process_time()
+    benchmark_data["load_data_serial"]["elapsed_duration"] = benchmark_data["load_data_serial"]["elapsed_end"] - benchmark_data["load_data_serial"]["elapsed_start"]
+    benchmark_data["load_data_serial"]["process_duration"] = benchmark_data["load_data_serial"]["process_end"] - benchmark_data["load_data_serial"]["process_start"]
+
     #del all_data, all_counts, all_time
     # load data parallel
    # logging.info("Begin parallel load data")
@@ -58,12 +62,17 @@ def main():
     if config["cpu"]:
         logging.info("CPU Training")
         benchmark_data["cpu_training"] = {}
-        benchmark_data["cpu_training"]["start"] = timer()
+        benchmark_data["cpu_training"]["elapsed_start"] = perf_counter()
+        benchmark_data["cpu_training"]["process_start"] = process_time()
         train_conv_net_cpu(train_data_scaled, train_counts, val_data_scaled, val_counts, config["conv_net_parameters"],
                            config["num_cpus"], config["random_seed"])
-        benchmark_data["cpu_training"]["end"] = timer()
-        benchmark_data["cpu_training"]["duration"] = benchmark_data["cpu_training"]["end"] - \
-                                                           benchmark_data["cpu_training"]["start"]
+        benchmark_data["cpu_training"]["elapsed_end"] = perf_counter()
+        benchmark_data["cpu_training"]["process_end"] = process_time()
+
+        benchmark_data["cpu_training"]["elapsed_duration"] = benchmark_data["cpu_training"]["elapsed_end"] - \
+                                                           benchmark_data["cpu_training"]["elapsed_start"]
+        benchmark_data["cpu_training"]["process_duration"] = benchmark_data["cpu_training"]["process_end"] - \
+                                                             benchmark_data["cpu_training"]["process_start"]
 
     # CPU inference
 
@@ -71,26 +80,36 @@ def main():
     if config["multi_gpu"]:
         logging.info("Multi GPU Training")
         benchmark_data["gpu_m_training"] = {}
-        benchmark_data["gpu_m_training"]["start"] = timer()
+        benchmark_data["gpu_m_training"]["elapsed_start"] = perf_counter()
+        benchmark_data["gpu_m_training"]["process_start"] = process_time()
         train_conv_net_gpu(train_data_scaled, train_counts, 
                            val_data_scaled, val_counts, config["conv_net_parameters"],
                            config["num_gpus"], config["random_seed"], dtype=config["dtype"])
-        benchmark_data["gpu_m_training"]["end"] = timer()
-        benchmark_data["gpu_m_training"]["duration"] = benchmark_data["gpu_m_training"]["end"] - \
-                                                           benchmark_data["gpu_m_training"]["start"]
+        benchmark_data["gpu_m_training"]["elapsed_end"] = perf_counter()
+        benchmark_data["gpu_m_training"]["process_end"] = process_time()
+        benchmark_data["gpu_m_training"]["elapsed_duration"] = benchmark_data["gpu_m_training"]["elapsed_end"] - \
+                                                           benchmark_data["gpu_m_training"]["elapsed_start"]
+        benchmark_data["gpu_m_training"]["process_duration"] = benchmark_data["gpu_m_training"]["process_end"] - \
+                                                           benchmark_data["gpu_m_training"]["process_start"]
 
 
     # Single GPU Training
     if config["single_gpu"]:
         logging.info("Single GPU Training")
         benchmark_data["gpu_1_training"] = {}
-        benchmark_data["gpu_1_training"]["start"] = timer()
+        benchmark_data["gpu_1_training"]["elapsed_start"] = perf_counter()
+        benchmark_data["gpu_1_training"]["process_start"] = process_time()
+
         train_conv_net_gpu(train_data_scaled, train_counts, 
                            val_data_scaled, val_counts, config["conv_net_parameters"],
                            1, config["random_seed"], dtype=config["dtype"])
-        benchmark_data["gpu_1_training"]["end"] = timer()
-        benchmark_data["gpu_1_training"]["duration"] = benchmark_data["gpu_1_training"]["end"] - \
-                                                           benchmark_data["gpu_1_training"]["start"]
+        benchmark_data["gpu_1_training"]["elapsed_end"] = perf_counter()
+        benchmark_data["gpu_1_training"]["process_end"] = process_time()
+
+        benchmark_data["gpu_1_training"]["elapsed_duration"] = benchmark_data["gpu_1_training"]["elapsed_end"] - \
+                                                           benchmark_data["gpu_1_training"]["elapsed_start"]
+        benchmark_data["gpu_1_training"]["process_duration"] = benchmark_data["gpu_1_training"]["process_end"] - \
+                                                               benchmark_data["gpu_1_training"]["process_start"]
     # Single GPU Inference
 
         # Multi GPU Inference
