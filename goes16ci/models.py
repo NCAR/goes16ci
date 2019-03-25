@@ -50,6 +50,7 @@ class StandardConvNet(object):
         self.batch_size = batch_size
         self.epochs = epochs
         self.model = None
+        self.parallel_model = None
         self.verbose = verbose
 
     def build_network(self, input_shape, output_size):
@@ -92,6 +93,13 @@ class StandardConvNet(object):
         else:
             opt = SGD(lr=self.learning_rate, momentum=0.99)
         self.model.compile(opt, self.loss, metrics=self.metrics)
+
+    def compile_parallel_model(self):
+        if self.optimizer == "adam":
+            opt = Adam(lr=self.learning_rate)
+        else:
+            opt = SGD(lr=self.learning_rate, momentum=0.99)
+        self.parallel_model.compile(opt, self.loss, metrics=self.metrics)
 
     @staticmethod
     def get_data_shapes(x, y):
@@ -209,7 +217,7 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
 
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
-                       conv_net_hyperparameters, num_gpus, seed, dtype="float32", cpu_relocation=True, cpu_merge=False):
+                       conv_net_hyperparameters, num_gpus, seed, dtype="float32", cpu_relocation=False, cpu_merge=False):
     np.random.seed(seed)
     config = K.tf.ConfigProto(allow_soft_placement=False)
     config.gpu_options.allow_growth = True
@@ -217,6 +225,7 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
     K.set_session(sess)
     K.tf.set_random_seed(seed)
     K.set_floatx(dtype)
+    scn = None
     if num_gpus == 1:
         with K.tf.device("/gpu:0"):
             scn = ResNet(**conv_net_hyperparameters)
@@ -234,7 +243,10 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         scn.compile_model()
         print(scn.model.summary())
         scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
-    save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus)) 
+    else:
+        print("Number of GPUs set to 0")
+    if scn is not None:
+        save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
     sess.close()
     del sess
     return
