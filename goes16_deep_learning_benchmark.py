@@ -11,7 +11,8 @@ from time import perf_counter, process_time
 import argparse
 import logging
 from datetime import datetime
-
+import psutil
+import platform
 
 def main():
     # read config file
@@ -23,6 +24,10 @@ def main():
     logging.basicConfig(stream=sys.stdout, level=config["log_level"])
     benchmark_data = dict()
     # load data serial
+    benchmark_data["system"] = dict()
+    benchmark_data["system"]["platform"] = platform.platform()
+    benchmark_data["system"]["python_version"] = platform.python_version()
+    benchmark_data["system"]["python_compiler"] = platform.python_compiler()
     logging.info("Begin serial load data")
     benchmark_data["load_data_serial"] = {}
     benchmark_data["load_data_serial"]["elapsed_start"] = perf_counter()
