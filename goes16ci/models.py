@@ -1,10 +1,10 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, Add
-from tensorflow.keras.layers import BatchNormalization
-from tensorflow.keras.models import Model, save_model
-from tensorflow.keras.optimizers import Adam, SGD
+from keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, Add
+from keras.layers import BatchNormalization
+from keras.models import Model, save_model
+from keras.optimizers import Adam, SGD
 import keras.backend as K
-from tensorflow.keras.utils import multi_gpu_model
+from keras.utils import multi_gpu_model
 import numpy as np
 import pandas as pd
 
