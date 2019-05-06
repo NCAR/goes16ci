@@ -12,4 +12,5 @@ module purge
 module load gnu/7.3.0 openmpi-x/3.1.0 python/3.6.4 cuda
 source /glade/work/dgagne/ncar_pylib_dl/bin/activate
 cd ~/goes16ci
+python setup.py install
 python -u goes16_deep_learning_benchmark.py >& goes_deep.log
