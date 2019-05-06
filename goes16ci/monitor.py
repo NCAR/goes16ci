@@ -17,7 +17,7 @@ from shutil import which
 class Monitor(object):
     """Monitor memory and other aspects of a process. 
     """
-    def __init__(self, p, sleep_interval=0.5):
+    def __init__(self, p, sleep_interval=0.2):
         self.pipe = p
         self.sleep_interval = sleep_interval
         self.monitoring_output_path = ""
@@ -25,6 +25,7 @@ class Monitor(object):
         self.time_values = list()
         self.monitor_values = dict()
         self.monitor_values["cpu_memory_percent"] = list()
+        self.monitor_values["cpu_util_percent"] = list()
         self.monitor_output_path = "/tmp/monitor_out.csv"
         if which("nvidia-smi") is not None:
             self.gpu = True
@@ -66,6 +67,7 @@ class Monitor(object):
         while monitoring_process:
             self.time_values.append(perf_counter())
             self.monitor_values["cpu_memory_percent"].append(self.proc.memory_percent(memtype="vms"))
+            self.monitor_values["cpu_util_percent"].append(self.proc.cpu_percent(interval=0.0))
             if self.gpu:
                 gpu_stats = get_gpu_util_stats()
                 for gpu_num in range(self.num_gpus):
@@ -150,9 +152,11 @@ def end_timing(benchmark_data, block_name):
 def calc_summary_stats(benchmark_data, block_name, output_file):
     stats = pd.read_csv(output_file, index_col="time")
     for col in stats.columns:
-        benchmark_data[block_name][col + "_max"] = stats[col].max()
-        benchmark_data[block_name][col + "_min"] = stats[col].min()
-        benchmark_data[block_name][col + "_mean"] = stats[col].mean()
+        print(col)
+        benchmark_data[block_name][col + "_max"] = float(stats[col].max())
+        benchmark_data[block_name][col + "_min"] = float(stats[col].min())
+        benchmark_data[block_name][col + "_mean"] = float(stats[col].mean())
+        benchmark_data[block_name][col + "_median"] = float(stats[col].median())
 
 
 if __name__ == '__main__':

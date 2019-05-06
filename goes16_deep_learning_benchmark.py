@@ -24,9 +24,10 @@ def main():
     parser.add_argument("-c", "--config", default="benchmark_config.yml", help="Config yaml file")
     args = parser.parse_args()
     with open(args.config, "r") as config_file:
-        config = yaml.load(config_file, Loader=yaml.SafeLoader)
+        config = yaml.load(config_file, Loader=yaml.SafeLoader) 
     logging.basicConfig(stream=sys.stdout, level=config["log_level"])
     benchmark_data = dict()
+    print(config["out_path"], type(config["out_path"]))
     # load data serial
     benchmark_data["system"] = dict()
     benchmark_data["system"]["platform"] = platform.platform()
@@ -82,7 +83,7 @@ def main():
                            config["num_gpus"], config["random_seed"], dtype=config["dtype"])
         end_timing(benchmark_data, "gpu_m_training")
         parent_p.send("stop")
-        calc_summary_stats(benchmark_data, "gpu_m_training", join(config["out_path"], "gpu_m_training_stats.csv"))
+        calc_summary_stats(benchmark_data, "gpu_m_training", str(join(config["out_path"], "gpu_m_training_stats.csv")))
     # Single GPU Training
     if config["single_gpu"]:
         logging.info("Single GPU Training")
@@ -93,7 +94,7 @@ def main():
                            1, config["random_seed"], dtype=config["dtype"])
         end_timing(benchmark_data, "gpu_1_training")
         parent_p.send("stop")
-        calc_summary_stats(benchmark_data, "gpu_1_training", join(config["out_path"], "gpu_1_training_stats.csv"))
+        calc_summary_stats(benchmark_data, "gpu_1_training", str(join(config["out_path"], "gpu_1_training_stats.csv")))
 
     # Single GPU Inference
 
@@ -103,10 +104,10 @@ def main():
     parent_p.send("exit")
     monitor_proc.join()
 
-    output_filename = join(config["out_path"], "goes_benchmark_data_{0}.yml".format(datetime.utcnow().strftime("%Y%m%d_%H%M%S")))
+    output_filename = str(join(config["out_path"], "goes_benchmark_data_{0}.yml".format(datetime.utcnow().strftime("%Y%m%d_%H%M%S"))))
     logging.info("Saving benchmark data to {output_filename}".format(output_filename=output_filename))
     with open(output_filename, "w") as output_file:
-        yaml.dump(benchmark_data, output_file, Dumper=yaml.SafeDumper)
+        yaml.dump(benchmark_data, output_file, Dumper=yaml.Dumper)
     return
 
 
