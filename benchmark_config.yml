@@ -1,4 +1,3 @@
-log_file: "goes16_benchmark_progress.log"
 log_level: 20
 data_path: "./data"
 parallel_processes: 8
@@ -20,3 +19,4 @@ multi_gpu: 1
 num_gpus: 2
 dtype: "float32"
 random_seed: 4832
+out_path: "./output"

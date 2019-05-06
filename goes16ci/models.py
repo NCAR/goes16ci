@@ -31,7 +31,7 @@ class StandardConvNet(object):
                  hidden_activation="relu", output_activation="sigmoid",
                  pooling="mean", use_dropout=False, dropout_alpha=0.0,
                  data_format="channels_first", optimizer="adam", loss="mse", leaky_alpha=0.1, metrics=None, 
-                 learning_rate=0.00001, batch_size=256, epochs=10, verbose=0):
+                 learning_rate=0.001, batch_size=1024, epochs=10, verbose=0):
         self.min_filters = min_filters
         self.filter_width = filter_width
         self.filter_growth_rate = filter_growth_rate
@@ -138,10 +138,10 @@ class ResNet(StandardConvNet):
     Extension of the :class:`goes16ci.models.StandardConvNet` to include Residual layers instead of single convolutional layers.
     The residual layers split the data signal off, apply normalization and convolutions to it, then adds it back on to the original field.
     """
-    def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
+    def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=3, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid", metrics=None,
-                 pooling="mean", use_dropout=False, dropout_alpha=0.0, data_format="channels_first", learning_rate=0.00001,
-                 optimizer="adam", loss="mse", leaky_alpha=0.1, batch_size=256, epochs=10, verbose=0):
+                 pooling="mean", use_dropout=False, dropout_alpha=0.0, data_format="channels_first", learning_rate=0.001,
+                 optimizer="adam", loss="mse", leaky_alpha=0.1, batch_size=1024, epochs=10, verbose=0):
         super().__init__(min_filters=min_filters, filter_growth_rate=filter_growth_rate, filter_width=filter_width,
                          min_data_width=min_data_width, hidden_activation=hidden_activation, data_format=data_format,
                          output_activation=output_activation, pooling=pooling, use_dropout=use_dropout,
