@@ -28,7 +28,9 @@ def main():
     logging.basicConfig(stream=sys.stdout, level=config["log_level"])
     benchmark_data = dict()
     # load data serial
+    benchmark_data["config"] = config
     benchmark_data["system"] = dict()
+    benchmark_data["system"]["hostname"] = platform.node()
     benchmark_data["system"]["platform"] = platform.platform()
     benchmark_data["system"]["python_version"] = platform.python_version()
     benchmark_data["system"]["python_compiler"] = platform.python_compiler()
@@ -38,14 +40,9 @@ def main():
     monitor_proc = Process(target=dl_monitor.run)
     monitor_proc.start()
     logging.info("Begin serial load data")
-    benchmark_data["load_data_serial"] = {}
-    benchmark_data["load_data_serial"]["elapsed_start"] = perf_counter()
-    benchmark_data["load_data_serial"]["process_start"] = process_time()
+    start_timing(benchmark_data, "load_data_serial")
     all_data, all_counts, all_time = load_data_serial(config["data_path"])
-    benchmark_data["load_data_serial"]["elapsed_end"] = perf_counter()
-    benchmark_data["load_data_serial"]["process_end"] = process_time()
-    benchmark_data["load_data_serial"]["elapsed_duration"] = benchmark_data["load_data_serial"]["elapsed_end"] - benchmark_data["load_data_serial"]["elapsed_start"]
-    benchmark_data["load_data_serial"]["process_duration"] = benchmark_data["load_data_serial"]["process_end"] - benchmark_data["load_data_serial"]["process_start"]
+    end_timing(benchmark_data, "load_data_serial")
     if not exists(config["out_path"]):
         os.makedirs(config["out_path"])
     # Split training and validation data
