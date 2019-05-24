@@ -1,10 +1,10 @@
 import tensorflow as tf
-from keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, Add
-from keras.layers import BatchNormalization
-from keras.models import Model, save_model
-from keras.optimizers import Adam, SGD
-import keras.backend as K
-from keras.utils import multi_gpu_model
+from tensorflow.keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, Add
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.models import Model, save_model
+from tensorflow.keras.optimizers import Adam, SGD
+import tensorflow.keras.backend as K
+from tensorflow.keras.utils import multi_gpu_model
 import numpy as np
 import pandas as pd
 
@@ -183,7 +183,6 @@ class ResNet(StandardConvNet):
     def build_network(self, input_shape, output_size):
         input_layer = Input(shape=input_shape, name="scn_input")
         num_conv_layers = int(np.log2(input_shape[1]) - np.log2(self.min_data_width))
-        print(num_conv_layers)
         num_filters = self.min_filters
         res_model = input_layer
         for c in range(num_conv_layers):
@@ -219,37 +218,44 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                        conv_net_hyperparameters, num_gpus, seed, dtype="float32", cpu_relocation=False, cpu_merge=False):
+    
     np.random.seed(seed)
-    config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=False)
-    config.gpu_options.allow_growth = True
-    sess = tf.Session(config=config)
-    K.set_session(sess)
-    tf.set_random_seed(seed)
-    K.set_floatx(dtype)
     scn = None
     if num_gpus == 1:
+        config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=False)
+        config.gpu_options.allow_growth = True
+        sess = tf.Session(config=config)
+        K.set_session(sess)
+        tf.set_random_seed(seed)
+        K.set_floatx(dtype)
+
         with tf.device("/device:GPU:0"):
             scn = ResNet(**conv_net_hyperparameters)
             #scn = StandardConvNet(**conv_net_hyperparameters)
         scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
         print(scn.model.summary())
-    elif num_gpus > 1:
-        scn = ResNet(**conv_net_hyperparameters)
-        scn.batch_size *= num_gpus
-        #scn = StandardConvNet(**conv_net_hyperparameters)
-        x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
-        scn.build_network(x_shape, y_size)
+    elif num_gpus > 1: 
+        config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=False)
+        config.gpu_options.allow_growth = True
+        sess = tf.Session(config=config)
+        K.set_session(sess)
+        tf.set_random_seed(seed)
+        K.set_floatx(dtype)
+        with tf.device("/device:GPU:0"):
+            scn = ResNet(**conv_net_hyperparameters)
+            scn.batch_size *= num_gpus
+            x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
+            scn.build_network(x_shape, y_size)
         print(scn.model.summary())
         mg_model = multi_gpu_model(scn.model, gpus=num_gpus, cpu_merge=cpu_merge, cpu_relocation=cpu_relocation)
-        mg_model.compile(Adam(lr=scn.learning_rate), scn.loss, metrics=scn.metrics)
+        opt = Adam(lr=scn.learning_rate)
+        mg_model.compile(opt, scn.loss, metrics=scn.metrics)
         mg_model.fit(train_data, train_labels, batch_size=scn.batch_size, epochs=scn.epochs)
-        print(scn.model.summary())
     else:
         print("Number of GPUs set to 0")
     if scn is not None:
         save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
     sess.close()
-    del sess
     return
 
 
