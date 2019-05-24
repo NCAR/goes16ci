@@ -9,8 +9,7 @@ import numpy as np
 from os.path import exists, join
 from goes16ci.data import load_data_serial
 from goes16ci.models import train_conv_net_cpu, train_conv_net_gpu, MinMaxScaler2D
-from goes16ci.monitor import Monitor, start_timing, end_timing, calc_summary_stats
-from time import perf_counter, process_time
+from goes16ci.monitor import Monitor, start_timing, end_timing, calc_summary_stats, get_gpu_names, get_gpu_topo, get_cuda_version
 import argparse
 import logging
 from datetime import datetime
@@ -35,6 +34,9 @@ def main():
     benchmark_data["system"]["python_version"] = platform.python_version()
     benchmark_data["system"]["python_compiler"] = platform.python_compiler()
     benchmark_data["system"]["tensorflow_version"] = tf.__version__
+    benchmark_data["system"]["gpus"] = get_gpu_names()
+    benchmark_data["system"].update(**get_cuda_version())
+    benchmark_data["system"]["gpu_topology"] = get_gpu_topo()
     parent_p, child_p = Pipe()
     dl_monitor = Monitor(child_p)
     monitor_proc = Process(target=dl_monitor.run)
@@ -65,8 +67,6 @@ def main():
         train_conv_net_cpu(train_data_scaled, train_counts, val_data_scaled, val_counts, config["conv_net_parameters"],
                            config["num_cpus"], config["random_seed"])
         end_timing(benchmark_data, "cpu_training")
-
-
     # CPU inference
 
     # Multi GPU Training

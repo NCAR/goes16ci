@@ -96,6 +96,14 @@ class Monitor(object):
         return
 
 
+def get_cuda_version():
+    proc = Popen(["nvidia-smi"], stdout=PIPE)
+    stdout, stderr = proc.communicate()
+    gpu_version_str = stdout.decode("UTF-8").split("\n")[2].split()
+    gpu_version_info = {"cuda_version": gpu_version_str[-2],
+                        "gpu_driver_version": gpu_version_str[-5]}
+    return gpu_version_info
+
 def get_gpu_names():
     """
     Get the names for each GPU on the system.
@@ -107,6 +115,18 @@ def get_gpu_names():
     stdout, stderr = proc.communicate()
     gpu_name_str = stdout.decode("UTF-8")
     return gpu_name_str.strip().split("\n")
+
+def get_gpu_topo():
+    """
+    Get the names for each GPU on the system.
+
+    Returns:
+
+    """
+    proc = Popen(["nvidia-smi", "topo", "-m"], stdout=PIPE)
+    stdout, stderr = proc.communicate()
+    gpu_topo_str = stdout.decode("UTF-8")
+    return gpu_topo_str
 
 
 def get_gpu_util_stats():
