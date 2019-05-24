@@ -12,8 +12,8 @@ if __name__ == "__main__":
           install_requires=["numpy",
                             "scipy",
                             "pandas",
-                            "tensorflow",
-                            "keras",
+                            "tensorflow<2",
+                            "keras>=2.2",
                             "xarray",
                             "dask",
                             "pyyaml"]
