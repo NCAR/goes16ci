@@ -1,10 +1,10 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, Add
-from tensorflow.keras.layers import BatchNormalization
-from tensorflow.keras.models import Model, save_model
-from tensorflow.keras.optimizers import Adam, SGD
-import tensorflow.keras.backend as K
-from tensorflow.keras.utils import multi_gpu_model
+from keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, Add
+from keras.layers import BatchNormalization
+from keras.models import Model, save_model
+from keras.optimizers import Adam, SGD
+import keras.backend as K
+from keras.utils import multi_gpu_model
 import numpy as np
 import pandas as pd
 
@@ -31,7 +31,7 @@ class StandardConvNet(object):
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid",
                  pooling="mean", use_dropout=False, dropout_alpha=0.0,
-                 data_format="channels_first", optimizer="adam", loss="mse", leaky_alpha=0.1, metrics=None, 
+                 data_format="channels_last", optimizer="adam", loss="mse", leaky_alpha=0.1, metrics=None, 
                  learning_rate=0.001, batch_size=1024, epochs=10, verbose=0):
         self.min_filters = min_filters
         self.filter_width = filter_width
@@ -141,7 +141,7 @@ class ResNet(StandardConvNet):
     """
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=3, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid", metrics=None,
-                 pooling="mean", use_dropout=False, dropout_alpha=0.0, data_format="channels_first", learning_rate=0.001,
+                 pooling="mean", use_dropout=False, dropout_alpha=0.0, data_format="channels_last", learning_rate=0.001,
                  optimizer="adam", loss="mse", leaky_alpha=0.1, batch_size=1024, epochs=10, verbose=0):
         super().__init__(min_filters=min_filters, filter_growth_rate=filter_growth_rate, filter_width=filter_width,
                          min_data_width=min_data_width, hidden_activation=hidden_activation, data_format=data_format,
@@ -232,7 +232,7 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         with tf.device("/device:GPU:0"):
             scn = ResNet(**conv_net_hyperparameters)
             #scn = StandardConvNet(**conv_net_hyperparameters)
-        scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+            scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
         print(scn.model.summary())
     elif num_gpus > 1: 
         config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=False)
@@ -241,13 +241,14 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         K.set_session(sess)
         tf.set_random_seed(seed)
         K.set_floatx(dtype)
-        with tf.device("/device:GPU:0"):
+        with tf.device("/cpu:0"):
             scn = ResNet(**conv_net_hyperparameters)
             scn.batch_size *= num_gpus
             x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
             scn.build_network(x_shape, y_size)
         print(scn.model.summary())
         mg_model = multi_gpu_model(scn.model, gpus=num_gpus, cpu_merge=cpu_merge, cpu_relocation=cpu_relocation)
+        print(mg_model.summary())
         opt = Adam(lr=scn.learning_rate)
         mg_model.compile(opt, scn.loss, metrics=scn.metrics)
         mg_model.fit(train_data, train_labels, batch_size=scn.batch_size, epochs=scn.epochs)
@@ -274,25 +275,25 @@ class MinMaxScaler2D(object):
         """
         Calculate the values for the min/max transformation.
         """
-        variables = np.arange(x.shape[1])
+        variables = np.arange(x.shape[-1])
         self.scale_values = pd.DataFrame(0, index=variables, columns=["min", "max"])
         for v in variables:
-            self.scale_values.loc[v, "min"] = x[:, v].min()
-            self.scale_values.loc[v, "max"] = x[:, v].max()
+            self.scale_values.loc[v, "min"] = x[:, :, :, v].min()
+            self.scale_values.loc[v, "max"] = x[:, :, :, v].max()
             self.scale_values.loc[v, "range"] = self.scale_values.loc[v, "max"] - self.scale_values.loc[v, "min"]
 
     def transform(self, x):
         """
         Apply the min/max scaling transformation.
         """
-        if x.shape[1] != self.scale_values.index.size:
+        if x.shape[-1] != self.scale_values.index.size:
             raise ValueError("Input x does not have the correct number of variables")
         x_new = np.zeros(x.shape, dtype=x.dtype)
         for v in self.scale_values.index:
-            x_new[:, v] = (x[:, v] - self.scale_values.loc[v, "min"]) \
+            x_new[:, :, :, v] = (x[:, :, :, v] - self.scale_values.loc[v, "min"]) \
                 / (self.scale_values.loc[v, "range"])
             if self.out_min != 0 or self.out_max != 1:
-                x_new[:, v] = x_new[:, v] * self.out_range + self.out_min
+                x_new[:, :, :, v] = x_new[:, :, :, v] * self.out_range + self.out_min
         return x_new
 
     def fit_transform(self, x, y=None):

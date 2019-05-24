@@ -32,6 +32,7 @@ def load_data_serial(data_path, image_variable="abi", count_variable="flash_coun
         counts_list.append(counts)
         time_list.append(time)
     all_images = np.concatenate(images_list)
+    all_images = np.moveaxis(all_images, 1, -1)
     all_counts = np.concatenate(counts_list)
     all_time = pd.DatetimeIndex(np.concatenate(time_list))
     return all_images, all_counts, all_time
