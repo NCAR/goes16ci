@@ -12,7 +12,7 @@ from time import perf_counter, process_time
 from subprocess import Popen, PIPE
 from io import StringIO
 from shutil import which
-
+from os.path import exists, join
 
 class Monitor(object):
     """Monitor memory and other aspects of a process. 
@@ -90,6 +90,7 @@ class Monitor(object):
                     del self.time_values[:]
                     for mvk in self.monitor_values.keys():
                         del self.monitor_values[mvk][:]
+                    self.pipe.send("saved")
                 else:
                     logging.info("Monitor::monitor_process: " +
                                  "unrecognized msg {0}".format(msg))
@@ -146,20 +147,22 @@ def get_gpu_util_stats():
     return pd.read_csv(StringIO(gpu_stat_str), index_col="index")
 
 
-def start_timing(benchmark_data, block_name):
+def start_timing(benchmark_data, block_name, monitor_pipe, out_path):
     """
     Start the timing for a block of code.
 
     Args:
         benchmark_data: dictionary of benchmark attributes
         block_name: Name of the block being timed.
+        monitor_pipe: 
     """
     benchmark_data[block_name] = {}
     benchmark_data[block_name]["elapsed_start"] = perf_counter()
     benchmark_data[block_name]["process_start"] = process_time()
+    monitor_pipe.send("start " + join(out_path, block_name + "_stats.csv"))
 
 
-def end_timing(benchmark_data, block_name):
+def end_timing(benchmark_data, block_name, monitor_pipe, out_path):
     benchmark_data[block_name]["elapsed_end"] = perf_counter()
     benchmark_data[block_name]["process_end"] = process_time()
 
@@ -167,9 +170,13 @@ def end_timing(benchmark_data, block_name):
         benchmark_data[block_name]["elapsed_start"]
     benchmark_data[block_name]["process_duration"] = benchmark_data[block_name]["process_end"] - \
         benchmark_data[block_name]["process_start"]
-
+    monitor_pipe.send("stop")
+    monitor_pipe.recv()
+    calc_summary_stats(benchmark_data, block_name, join(out_path, block_name + "_stats.csv"))
 
 def calc_summary_stats(benchmark_data, block_name, output_file):
+    if not exists(output_file):
+        raise FileNotFoundError(output_file + " does not exist")
     stats = pd.read_csv(output_file, index_col="time")
     for col in stats.columns:
         print(col)

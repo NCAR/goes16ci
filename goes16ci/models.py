@@ -204,15 +204,14 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
                        conv_net_hyperparameters, num_processors, seed):
     np.random.seed(seed)
     tf.set_random_seed(seed)
-    sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=False, intra_op_parallelism_threads=1,
-                                                inter_op_parallelism_threads=num_processors))
+    sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=False, intra_op_parallelism_threads=num_processors,
+                                                inter_op_parallelism_threads=1))
     K.set_session(sess)
 
     with tf.device("/cpu:0"):
         scn = StandardConvNet(**conv_net_hyperparameters)
         scn.fit(train_data, train_labels)
     sess.close()
-    del sess
     return
 
 

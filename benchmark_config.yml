@@ -7,16 +7,16 @@ conv_net_parameters:
   use_dropout: 0
   dropout_alpha: 0.1
   verbose: 1
-  epochs: 5
+  epochs: 2
   learning_rate: 0.0001
   batch_size: 1024
   loss: "binary_crossentropy"
   metrics: ["mean_squared_error"]
-cpu: 0
-num_cpus: 1
+cpu: 1
+num_cpus: 30
 single_gpu: 1
 multi_gpu: 1
-num_gpus: 8
+num_gpus: 2
 dtype: "float32"
 random_seed: 4832
-out_path: "./output"
+out_path: "./output_2"
