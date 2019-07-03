@@ -19,4 +19,4 @@ multi_gpu: 1
 num_gpus: 2
 dtype: "float32"
 random_seed: 4832
-out_path: "./output_2"
+out_path: "./output"
