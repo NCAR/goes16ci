@@ -39,6 +39,9 @@ def main():
     benchmark_data["system"]["python_compiler"] = platform.python_compiler()
     benchmark_data["system"]["tensorflow_version"] = tf.__version__
     benchmark_data["system"]["gpus"] = get_gpu_names()
+    has_gpus = True
+    if len(benchmark_data["system"]["gpus"]) == 0:
+        has_gpus = False
     benchmark_data["system"].update(**get_cuda_version())
     benchmark_data["system"]["gpu_topology"] = get_gpu_topo()
     logging.info("Begin serial load data")
@@ -69,29 +72,30 @@ def main():
             logging.info("CPU Training")
             block_name = "cpu_training"
             start_timing(benchmark_data, block_name, parent_p, out_path)
-            train_conv_net_cpu(train_data_scaled, train_counts, val_data_scaled, val_counts, config["conv_net_parameters"],
-                            config["num_cpus"], config["random_seed"])
-            end_timing(benchmark_data, block_name, parent_p, out_path)
+            epoch_times = train_conv_net_cpu(train_data_scaled, train_counts,
+                                             val_data_scaled, val_counts, config["conv_net_parameters"],
+                                             config["num_cpus"], config["random_seed"])
+            end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
         # CPU inference
 
         # Multi GPU Training
-        if config["multi_gpu"]:
+        if config["multi_gpu"] and has_gpus:
             block_name = "gpu_{0:02d}_training".format(config["num_gpus"])
             logging.info("Multi GPU Training")
             start_timing(benchmark_data, block_name, parent_p, out_path)
-            train_conv_net_gpu(train_data_scaled, train_counts, 
+            epoch_times = train_conv_net_gpu(train_data_scaled, train_counts,
                             val_data_scaled, val_counts, config["conv_net_parameters"],
                             config["num_gpus"], config["random_seed"], dtype=config["dtype"])
-            end_timing(benchmark_data, block_name, parent_p, out_path)
+            end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
         # Single GPU Training
-        if config["single_gpu"]:
+        if config["single_gpu"] and has_gpus:
             logging.info("Single GPU Training")
             block_name = "gpu_{0:02d}_training".format(1)
             start_timing(benchmark_data, block_name, parent_p, out_path)
-            train_conv_net_gpu(train_data_scaled, train_counts, 
+            epoch_times = train_conv_net_gpu(train_data_scaled, train_counts,
                             val_data_scaled, val_counts, config["conv_net_parameters"],
                             1, config["random_seed"], dtype=config["dtype"])
-            end_timing(benchmark_data, block_name, parent_p, out_path)
+            end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
 
         # Single GPU Inference
 
@@ -107,6 +111,8 @@ def main():
             yaml.dump(benchmark_data, output_file, Dumper=yaml.Dumper)
     except Exception as e:
         logging.error(traceback.format_exc())
+        parent_p.send("exit")
+        monitor_proc.join()
         sys.exit()
     return
 

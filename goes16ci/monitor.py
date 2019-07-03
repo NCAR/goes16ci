@@ -14,6 +14,7 @@ from io import StringIO
 from shutil import which
 from os.path import exists, join
 
+
 class Monitor(object):
     """Monitor memory and other aspects of a process. 
     """
@@ -27,6 +28,9 @@ class Monitor(object):
         self.monitor_values["cpu_memory_percent"] = list()
         self.monitor_values["cpu_util_percent"] = list()
         self.monitor_output_path = "/tmp/monitor_out.csv"
+        self.gpu = False
+        self.num_gpus = 0
+        self.gpu_names = []
         if which("nvidia-smi") is not None:
             self.gpu = True
             self.gpu_names = get_gpu_names()
@@ -100,12 +104,16 @@ class Monitor(object):
 
 
 def get_cuda_version():
-    proc = Popen(["nvidia-smi"], stdout=PIPE)
-    stdout, stderr = proc.communicate()
-    gpu_version_str = stdout.decode("UTF-8").split("\n")[2].split()
-    gpu_version_info = {"cuda_version": gpu_version_str[-2],
+    if which("nvidia-smi") is None:
+        gpu_version_info = {"cuda_version": "-1", "gpu_driver_version": "-1"}
+    else:
+        proc = Popen(["nvidia-smi"], stdout=PIPE)
+        stdout, stderr = proc.communicate()
+        gpu_version_str = stdout.decode("UTF-8").split("\n")[2].split()
+        gpu_version_info = {"cuda_version": gpu_version_str[-2],
                         "gpu_driver_version": gpu_version_str[-5]}
     return gpu_version_info
+
 
 def get_gpu_names():
     """
@@ -114,10 +122,14 @@ def get_gpu_names():
     Returns:
 
     """
-    proc = Popen(["nvidia-smi", "-L"], stdout=PIPE)
-    stdout, stderr = proc.communicate()
-    gpu_name_str = stdout.decode("UTF-8")
-    return gpu_name_str.strip().split("\n")
+    if which("nvidia-smi") is None:
+        gpu_name_list = []
+    else:
+        proc = Popen(["nvidia-smi", "-L"], stdout=PIPE)
+        stdout, stderr = proc.communicate()
+        gpu_name_str = stdout.decode("UTF-8")
+        gpu_name_list = gpu_name_str.strip().split("\n")
+    return gpu_name_list
 
 def get_gpu_topo():
     """
@@ -126,9 +138,12 @@ def get_gpu_topo():
     Returns:
 
     """
-    proc = Popen(["nvidia-smi", "topo", "-m"], stdout=PIPE)
-    stdout, stderr = proc.communicate()
-    gpu_topo_str = stdout.decode("UTF-8")
+    if which("nvidia-smi") is None:
+        gpu_topo_str = ""
+    else:
+        proc = Popen(["nvidia-smi", "topo", "-m"], stdout=PIPE)
+        stdout, stderr = proc.communicate()
+        gpu_topo_str = stdout.decode("UTF-8")
     return gpu_topo_str
 
 
@@ -162,7 +177,7 @@ def start_timing(benchmark_data, block_name, monitor_pipe, out_path):
     monitor_pipe.send("start " + join(out_path, block_name + "_stats.csv"))
 
 
-def end_timing(benchmark_data, block_name, monitor_pipe, out_path):
+def end_timing(benchmark_data, epoch_times, block_name, monitor_pipe, out_path):
     benchmark_data[block_name]["elapsed_end"] = perf_counter()
     benchmark_data[block_name]["process_end"] = process_time()
 
@@ -170,6 +185,7 @@ def end_timing(benchmark_data, block_name, monitor_pipe, out_path):
         benchmark_data[block_name]["elapsed_start"]
     benchmark_data[block_name]["process_duration"] = benchmark_data[block_name]["process_end"] - \
         benchmark_data[block_name]["process_start"]
+    benchmark_data[block_name]["epoch_duration"] = epoch_times[-1]
     monitor_pipe.send("stop")
     monitor_pipe.recv()
     calc_summary_stats(benchmark_data, block_name, join(out_path, block_name + "_stats.csv"))

@@ -4,9 +4,28 @@ from keras.layers import BatchNormalization
 from keras.models import Model, save_model
 from keras.optimizers import Adam, SGD
 import keras.backend as K
+from keras.callbacks import Callback
 from keras.utils import multi_gpu_model
 import numpy as np
 import pandas as pd
+from time import perf_counter
+import logging
+
+
+class TimeHistory(Callback):
+    def __init__(self):
+        self.times = []
+        self.epoch_time_start = 0
+        super(TimeHistory, self).__init__()
+        
+    def on_train_begin(self, logs=None):
+        self.times = []
+
+    def on_epoch_begin(self, epoch, logs=None):
+        self.epoch_time_start = perf_counter()
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.times.append(perf_counter() - self.epoch_time_start)
 
 
 class StandardConvNet(object):
@@ -52,6 +71,7 @@ class StandardConvNet(object):
         self.epochs = epochs
         self.model = None
         self.parallel_model = None
+        self.time_history = TimeHistory()
         self.verbose = verbose
 
     def build_network(self, input_shape, output_size):
@@ -127,8 +147,9 @@ class StandardConvNet(object):
             val_data = None
         else:
             val_data = (val_x, val_y)
+
         self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
-                       validation_data=val_data)
+                       validation_data=val_data, callbacks=[self.time_history])
 
     def predict(self, x, y):
         return self.model.predict(x, y, batch_size=self.batch_size)
@@ -209,17 +230,17 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
     K.set_session(sess)
 
     with tf.device("/cpu:0"):
-        scn = StandardConvNet(**conv_net_hyperparameters)
-        scn.fit(train_data, train_labels)
+        scn = ResNet(**conv_net_hyperparameters)
+        scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+        epoch_times = scn.time_history.times
     sess.close()
-    return
+    return epoch_times
 
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                        conv_net_hyperparameters, num_gpus, seed, dtype="float32", cpu_relocation=False, cpu_merge=False):
     
     np.random.seed(seed)
-    scn = None
     if num_gpus == 1:
         config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=False)
         config.gpu_options.allow_growth = True
@@ -232,7 +253,11 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
             scn = ResNet(**conv_net_hyperparameters)
             #scn = StandardConvNet(**conv_net_hyperparameters)
             scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
-        print(scn.model.summary())
+            epoch_times = scn.time_history.times
+        logging.info(scn.model.summary())
+        if scn is not None:
+            save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
+            sess.close()
     elif num_gpus > 1: 
         config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=False)
         config.gpu_options.allow_growth = True
@@ -245,18 +270,20 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
             scn.batch_size *= num_gpus
             x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
             scn.build_network(x_shape, y_size)
-        print(scn.model.summary())
         mg_model = multi_gpu_model(scn.model, gpus=num_gpus, cpu_merge=cpu_merge, cpu_relocation=cpu_relocation)
-        print(mg_model.summary())
         opt = Adam(lr=scn.learning_rate)
         mg_model.compile(opt, scn.loss, metrics=scn.metrics)
-        mg_model.fit(train_data, train_labels, batch_size=scn.batch_size, epochs=scn.epochs)
+        mg_model.fit(train_data, train_labels, batch_size=scn.batch_size, epochs=scn.epochs,
+                     callbacks=[scn.time_history])
+        logging.info(scn.model.summary())
+        epoch_times = scn.time_history.times
+        if scn is not None:
+            save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
+            sess.close()
     else:
         print("Number of GPUs set to 0")
-    if scn is not None:
-        save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
-    sess.close()
-    return
+        epoch_times = []
+    return epoch_times
 
 
 class MinMaxScaler2D(object):
