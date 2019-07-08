@@ -9,7 +9,7 @@ import numpy as np
 from os.path import exists, join
 from goes16ci.data import load_data_serial
 from goes16ci.models import train_conv_net_cpu, train_conv_net_gpu, MinMaxScaler2D
-from goes16ci.monitor import Monitor, start_timing, end_timing, calc_summary_stats, get_gpu_names, get_gpu_topo, get_cuda_version
+from goes16ci.monitor import Monitor, start_timing, end_timing, get_gpu_names, get_gpu_topo, get_cuda_version
 import argparse
 import logging
 from datetime import datetime
@@ -80,13 +80,16 @@ def main():
 
         # Multi GPU Training
         if config["multi_gpu"] and has_gpus:
-            block_name = "gpu_{0:02d}_training".format(config["num_gpus"])
-            logging.info("Multi GPU Training")
-            start_timing(benchmark_data, block_name, parent_p, out_path)
-            epoch_times = train_conv_net_gpu(train_data_scaled, train_counts,
-                            val_data_scaled, val_counts, config["conv_net_parameters"],
-                            config["num_gpus"], config["random_seed"], dtype=config["dtype"])
-            end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
+            gpu_nums = np.array([2, 4, 8])
+            gpu_nums = gpu_nums[gpu_nums <= np.minimum(config["num_gpus"], len(benchmark_data["system"]["gpus"]))]
+            for gpu_num in gpu_nums:
+                block_name = "gpu_{0:02d}_training".format(gpu_num)
+                logging.info("Multi GPU Training {0:02d}".format(gpu_num))
+                start_timing(benchmark_data, block_name, parent_p, out_path)
+                epoch_times = train_conv_net_gpu(train_data_scaled, train_counts,
+                                                 val_data_scaled, val_counts, config["conv_net_parameters"],
+                                                 gpu_num, config["random_seed"], dtype=config["dtype"])
+                end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
         # Single GPU Training
         if config["single_gpu"] and has_gpus:
             logging.info("Single GPU Training")
@@ -97,10 +100,6 @@ def main():
                             1, config["random_seed"], dtype=config["dtype"])
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
 
-        # Single GPU Inference
-
-            # Multi GPU Inference
-
         # Save benchmark data
         parent_p.send("exit")
         monitor_proc.join()
@@ -109,6 +108,7 @@ def main():
         logging.info("Saving benchmark data to {output_filename}".format(output_filename=output_filename))
         with open(output_filename, "w") as output_file:
             yaml.dump(benchmark_data, output_file, Dumper=yaml.Dumper)
+        print_summary(benchmark_data)
     except Exception as e:
         logging.error(traceback.format_exc())
         parent_p.send("exit")
@@ -116,6 +116,27 @@ def main():
         sys.exit()
     return
 
+
+def print_summary(benchmark_data):
+    logging.info("*** GOES Summary ***")
+    if "cpu_training" in benchmark_data.keys():
+        logging.info("CPU Training")
+        logging.info("Elapsed: {0:0.2f}".format(benchmark_data["cpu_training"]["elapsed_duration"]))
+        logging.info("Epoch: {0:0.2f}".format(benchmark_data["cpu_training"]["epoch_duration"]))
+        logging.info("Epoch/Elapsed: {0:0.3f}".format(benchmark_data["cpu_training"]["epoch_duration"]
+                                                      / benchmark_data["cpu_training"]["elapsed_duration"]))
+        logging.info("\n")
+    for gpu in [1, 2, 4, 8]:
+        block_name = "gpu_{0:02d}_training".format(gpu)
+        if block_name in benchmark_data.keys():
+            logging.info("{0:02d} GPU Training".format(gpu))
+            logging.info("Elapsed: {0:0.2f}".format(benchmark_data[block_name]["elapsed_duration"]))
+            logging.info("Epoch: {0:0.2f}".format(benchmark_data[block_name]["epoch_duration"]))
+            logging.info("Epoch/Elapsed: {0:0.3f}".format(benchmark_data[block_name]["epoch_duration"]
+                                                          / benchmark_data[block_name]["elapsed_duration"]))
+            logging.info("\n")
+
+    return
 
 if __name__ == "__main__":
     main()
