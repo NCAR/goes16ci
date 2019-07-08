@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #PBS -N goes16ci
 #PBS -A NAML0001
-#PBS -l walltime=04:00:00
+#PBS -l walltime=08:00:00
 #PBS -j oe
 #PBS -q regular
 #PBS -l select=1:ncpus=36

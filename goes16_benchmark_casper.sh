@@ -3,10 +3,11 @@
 #SBATCH --account=NAML0001
 #SBATCH --ntasks=32
 #SBATCH --cpus-per-task=1
-#SBATCH --time=01:00:00
+#SBATCH --time=06:00:00
 #SBATCH --partition=dav
-#SBATCH --gres=gpu:v100:2
-#SBATCH --mem=128G
+#SBATCH --gres=gpu:v100:8
+#SBATCH --exclusive
+#SBATCH --mem=256G
 module purge
 module load gnu/7.3.0 openmpi python/3.6.8 cuda/10.0
 source /glade/work/dgagne/ncar_pylib_dl_10/bin/activate
