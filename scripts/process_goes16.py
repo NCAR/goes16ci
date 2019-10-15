@@ -92,8 +92,8 @@ def main():
 
 
 def glm_single_date():
-    glm_path = "/Users/dgagne/data/goes16_nc/GLM-L2_LCFA"
-    out_path = '/Users/dgagne/data/goes16_glm_grids'
+    glm_path = "/Users/gwallach/data/goes16_nc/GLM-L2_LCFA"
+    out_path = '/Users/gwallach/data/goes16_glm_grids'
     start_date = pd.Timestamp("2018-05-01 03:00:00")
     end_date = pd.Timestamp("2018-05-02")
     out_freq = "60min"

@@ -11,6 +11,7 @@ export PATH="/glade/u/home/dgagne/miniconda3/envs/tf2/bin:$PATH"
 echo `which python`
 echo $path
 cd ~/goes16ci/scripts
-python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16_nc/ -d 2018-04-01 -e 2018-06-06 -n 5 >& extract.log
-python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16_nc/ -i ABI-L1b -s conus -d 2018-04-01 -e 2018-06-06 -n 5 >& extract.log
+python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16_nc/ -d 2019-03-01 -e 2019-05-01 -n 5 >& extract.log
+python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16_nc/ -i ABI-L1b -s conus -d 2019-03-01 -e 2019-05-01 -n 5 >& extract.log
 python -u untar_goes16.py >& extract.log
+

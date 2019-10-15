@@ -4,8 +4,8 @@ from os.path import join, exists
 import subprocess
 
 def main():
-    tar_path = "/glade/scratch/dgagne/goes16/"
-    out_path = "/glade/p/cisl/aiml/dgagne/goes16_nc/"
+    tar_path = "/glade/scratch/gwallach/goes16/"
+    out_path = "/glade/p/cisl/aiml/gwallach/goes16_nc/"
     instruments = sorted(listdir(tar_path))
     for instrument in instruments:
         if not exists(join(out_path, instrument)):

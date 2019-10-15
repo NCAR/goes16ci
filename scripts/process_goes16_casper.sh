@@ -10,7 +10,7 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=dgagne
 module purge
-export HOME="/glade/u/home/dgagne"
+export HOME="/glade/u/home/gwallach"
 module load gnu/7.3.0 openmpi-x/3.1.0 python/3.6.4 cuda netcdf
 source /glade/work/dgagne/ncar_pylib_dl/bin/activate
 cd $HOME/goes16ci
