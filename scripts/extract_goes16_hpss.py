@@ -12,7 +12,7 @@ def main():
     parser.add_argument("-p", "--path", default="/FS/EOL/operational/satellite/goes/g16/", 
                         help="Path to HPSS top level GOES-16 directory")
     parser.add_argument("-t", "--tout", default="/glade/scratch/gwallach/goes16/", help="Path to tar files")
-    parser.add_argument("-o", "--out", default="/glade/scratch/gwallach/goes16/", help="Path where output netCDF files are extracted")
+    parser.add_argument("-o", "--out", default="/glade/scratch/gwallach/goes16_nc/", help="Path where output netCDF files are extracted")
     parser.add_argument("-i", "--ins", default="GLM-L2", choices=["ABI-L1b", "GLM-L2"], 
                         help="Instrument on satellite")
     parser.add_argument("-s", "--sec", default="LCFA", choices=["LCFA", "conus", "fdisk", "meso"], help="Sector")
@@ -20,7 +20,7 @@ def main():
     parser.add_argument("-e", "--enddate", help="Last date of extraction (inclusive)")
     parser.add_argument("-n", "--nproc", type=int, default=1, help="Number of processes")
     args = parser.parse_args()
-    dates = pd.DatetimeIndex(start=args.startdate, end=args.enddate, freq="1D")
+    dates = pd.date_range(start=args.startdate, end=args.enddate, freq="1D")
     if args.nproc > 1:
         pool = Pool(args.nproc)
         for date in dates:
