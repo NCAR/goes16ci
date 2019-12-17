@@ -2,7 +2,7 @@
 #SBATCH -J goes16_hpss
 #SBATCH -A NAML0001
 #SBATCH -t 24:00:00
-#SBATCH -p hpss
+#SBATCH -p dav
 #SBATCH -n 1
 #SBATCH --ntasks-per-node=5
 #SBATCH -e goes16_hpss.log

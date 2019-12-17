@@ -12,13 +12,13 @@ def main():
         #print("Instrument's Loop")
         dates = sorted(listdir(join(tar_path, instrument)))
         for date in dates:
-            print("Dates Loop")
+            #print("Dates Loop")
             print(instrument, date)
             if not exists(join(out_path, instrument, date)):
                 makedirs(join(out_path, instrument, date))
-            print("In if not exists")
+            #print("In if not exists")
             tar_files = sorted(glob(join(tar_path, instrument, date, "*.tar")))
-            print("past line 22")
+            #print("past line 22")
             for tar_file in tar_files:
                 #print("tar_file =",tar_file)
                 j_join = join(out_path, instrument, date)
@@ -28,7 +28,7 @@ def main():
                 #print(tar_command)
                 #subprocess.call(tar_command,shell = True)
                 #subprocess.Popen('tar','-xvf',tar_file,'--strip-components=3','-C', j_join)
-                subprocess.Popen(tar_command)
+                subprocess.call(tar_command)
                 
 if __name__ == "__main__":
     main()

@@ -16,7 +16,7 @@ glm:
   y_extent_km: 2048.0 # south-north extent of grid in km
 abi:
   abi_path: "/glade/scratch/gwallach/goes16_nc/ABI-L1b_conus/"
-  patch_path: "/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315/"
+  patch_path: "/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/"
   glm_grid_path: "/glade/scratch/gwallach/goes16_nc/GLM_grids_64/"
   start_date: "2019-03-01"
   end_date: "2019-05-01"
