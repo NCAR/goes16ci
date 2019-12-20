@@ -11,6 +11,6 @@
 #SBATCH --mail-user=dgagne
 export PATH="/glade/u/home/gwallach/.conda/envs/goes16/bin:$PATH"
 cd $HOME/goes16ci/scripts
-#python -u process_goes16.py goes16_process_config_32.yml -n 36 -a >& process.log
-#python -u process_goes16.py goes16_process_config_64.yml -n 36 -a >& process.log
-python -u process_goes16.py goes16_process_config_128.yml -n 36 -a >& process.log
+python -u process_goes16.py goes16_process_config_32.yml -l -n 36 -a >& process.log
+python -u process_goes16.py goes16_process_config_64.yml -l -n 36 -a >& process.log
+python -u process_goes16.py goes16_process_config_128.yml -l -n 36 -a >& process.log
