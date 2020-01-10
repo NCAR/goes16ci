@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: goes16ci
+Version: 0.1
+Summary: Machine learning benchmark for lightning prediction with GOES16
+Home-page: https://github.com/NCAR/goes16ci
+Author: David John Gagne
+Author-email: dgagne@ucar.edu
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN

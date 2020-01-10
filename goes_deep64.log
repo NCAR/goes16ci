@@ -1,0 +1,154 @@
+Using TensorFlow backend.
+'./benchmark_output_final_64'
+./benchmark_output_final_64 <class 'str'>
+INFO:root:Begin serial load data
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190301T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190302T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190303T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190304T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190305T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190306T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190307T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190308T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190309T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190310T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190311T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190312T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190313T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190314T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190315T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190316T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190317T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190318T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190319T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190320T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190321T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190322T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190323T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190324T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190325T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190326T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190327T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190328T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190329T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190330T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190331T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190401T000000.nc
+INFO:root:/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_64/abi_patches_20190402T000000.nc
+INFO:root:Split training and testing data
+          min         max       range
+0  199.294525  256.655182   57.360657
+1  197.486786  267.333221   69.846436
+2  197.486343  273.109955   75.623611
+3  196.431915  303.513977  107.082062
+INFO:root:Single GPU Training
+2020-01-07 18:47:56.909744: I tensorflow/core/platform/cpu_feature_guard.cc:142] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 AVX512F FMA
+2020-01-07 18:47:56.922931: I tensorflow/core/platform/profile_utils/cpu_utils.cc:101] CPU Frequency: 2300000000 Hz
+2020-01-07 18:47:56.925696: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x55c98c63e720 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
+2020-01-07 18:47:56.927249: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
+2020-01-07 18:47:56.930454: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcuda.so.1
+2020-01-07 18:47:58.825600: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x55c98c99c020 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+2020-01-07 18:47:58.825678: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Tesla V100-SXM2-32GB, Compute Capability 7.0
+2020-01-07 18:47:58.825692: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (1): Tesla V100-SXM2-32GB, Compute Capability 7.0
+2020-01-07 18:47:58.825701: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (2): Tesla V100-SXM2-32GB, Compute Capability 7.0
+2020-01-07 18:47:58.825710: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (3): Tesla V100-SXM2-32GB, Compute Capability 7.0
+2020-01-07 18:47:58.825718: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (4): Tesla V100-SXM2-32GB, Compute Capability 7.0
+2020-01-07 18:47:58.825726: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (5): Tesla V100-SXM2-32GB, Compute Capability 7.0
+2020-01-07 18:47:58.825735: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (6): Tesla V100-SXM2-32GB, Compute Capability 7.0
+2020-01-07 18:47:58.825743: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (7): Tesla V100-SXM2-32GB, Compute Capability 7.0
+2020-01-07 18:47:58.833982: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 0 with properties: 
+pciBusID: 0000:1a:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.836150: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 1 with properties: 
+pciBusID: 0000:1b:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.838315: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 2 with properties: 
+pciBusID: 0000:3d:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.840470: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 3 with properties: 
+pciBusID: 0000:3e:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.842602: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 4 with properties: 
+pciBusID: 0000:88:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.844720: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 5 with properties: 
+pciBusID: 0000:89:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.846832: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 6 with properties: 
+pciBusID: 0000:b2:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.848951: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 7 with properties: 
+pciBusID: 0000:b3:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.849205: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcudart.so.10.1'; dlerror: libcudart.so.10.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.849340: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcublas.so.10'; dlerror: libcublas.so.10: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.849456: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcufft.so.10'; dlerror: libcufft.so.10: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.849577: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcurand.so.10'; dlerror: libcurand.so.10: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.849699: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcusolver.so.10'; dlerror: libcusolver.so.10: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.849818: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcusparse.so.10'; dlerror: libcusparse.so.10: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.864326: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2020-01-07 18:47:58.864355: W tensorflow/core/common_runtime/gpu/gpu_device.cc:1595] Cannot dlopen some GPU libraries. Please make sure the missing libraries mentioned above are installed properly if you would like to use GPU. Follow the guide at https://www.tensorflow.org/install/gpu for how to download and setup the required libraries for your platform.
+Skipping registering GPU devices...
+2020-01-07 18:47:58.865427: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1099] Device interconnect StreamExecutor with strength 1 edge matrix:
+2020-01-07 18:47:58.865442: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1105]      0 1 2 3 4 5 6 7 
+2020-01-07 18:47:58.865452: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1118] 0:   N Y Y Y Y Y Y Y 
+2020-01-07 18:47:58.865460: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1118] 1:   Y N Y Y Y Y Y Y 
+2020-01-07 18:47:58.865469: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1118] 2:   Y Y N Y Y Y Y Y 
+2020-01-07 18:47:58.865477: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1118] 3:   Y Y Y N Y Y Y Y 
+2020-01-07 18:47:58.865485: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1118] 4:   Y Y Y Y N Y Y Y 
+2020-01-07 18:47:58.865493: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1118] 5:   Y Y Y Y Y N Y Y 
+2020-01-07 18:47:58.865502: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1118] 6:   Y Y Y Y Y Y N Y 
+2020-01-07 18:47:58.865510: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1118] 7:   Y Y Y Y Y Y Y N 
+WARNING:tensorflow:From /glade/u/home/gwallach/goes16ci/goes16ci/models.py:248: The name tf.keras.backend.set_session is deprecated. Please use tf.compat.v1.keras.backend.set_session instead.
+
+WARNING:tensorflow:From /glade/u/home/gwallach/goes16ci/goes16ci/models.py:248: The name tf.keras.backend.set_session is deprecated. Please use tf.compat.v1.keras.backend.set_session instead.
+
+2020-01-07 18:47:58.872995: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 0 with properties: 
+pciBusID: 0000:1a:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.875137: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 1 with properties: 
+pciBusID: 0000:1b:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.877148: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 2 with properties: 
+pciBusID: 0000:3d:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.879261: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 3 with properties: 
+pciBusID: 0000:3e:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.881294: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 4 with properties: 
+pciBusID: 0000:88:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.883292: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 5 with properties: 
+pciBusID: 0000:89:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.885289: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 6 with properties: 
+pciBusID: 0000:b2:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.887283: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1558] Found device 7 with properties: 
+pciBusID: 0000:b3:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-01-07 18:47:58.887443: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcudart.so.10.1'; dlerror: libcudart.so.10.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.887559: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcublas.so.10'; dlerror: libcublas.so.10: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.887669: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcufft.so.10'; dlerror: libcufft.so.10: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.887773: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcurand.so.10'; dlerror: libcurand.so.10: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.887877: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcusolver.so.10'; dlerror: libcusolver.so.10: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.887979: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcusparse.so.10'; dlerror: libcusparse.so.10: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /glade/u/apps/dav/opt/cuda/10.0/tensorrt/lib:/glade/u/apps/dav/opt/cuda/10.0/lib:/glade/u/apps/dav/opt/cuda/10.0/lib64:/glade/u/apps/dav/opt/openmpi/3.1.4/gnu/7.3.0/lib:/glade/u/apps/dav/opt/gnu/7.3.0/lib64:/glade/u/apps/dav/opt/gnu/7.3.0/lib/gcc/x86_64-pc-linux-gnu/7.3.0:/lib:/lib64:/usr/lib:/usr/lib64
+2020-01-07 18:47:58.888000: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2020-01-07 18:47:58.888010: W tensorflow/core/common_runtime/gpu/gpu_device.cc:1595] Cannot dlopen some GPU libraries. Please make sure the missing libraries mentioned above are installed properly if you would like to use GPU. Follow the guide at https://www.tensorflow.org/install/gpu for how to download and setup the required libraries for your platform.
+Skipping registering GPU devices...
+2020-01-07 18:47:58.888935: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1099] Device interconnect StreamExecutor with strength 1 edge matrix:
+2020-01-07 18:47:58.888956: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1105]      
+ERROR:root:Traceback (most recent call last):
+  File "goes16_deep_learning_benchmark_64.py", line 100, in main
+    1, config["random_seed"], dtype=config["dtype"])
+  File "/glade/u/home/gwallach/goes16ci/goes16ci/models.py", line 255, in train_conv_net_gpu
+    scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+  File "/glade/u/home/gwallach/goes16ci/goes16ci/models.py", line 144, in fit
+    self.build_network(x_shape, y_size)
+  File "/glade/u/home/gwallach/goes16ci/goes16ci/models.py", line 210, in build_network
+    res_model = self.residual_block(num_filters, res_model, c)
+  File "/glade/u/home/gwallach/goes16ci/goes16ci/models.py", line 181, in residual_block
+    if in_layer.shape[-1].value != filters:
+AttributeError: 'int' object has no attribute 'value'
+
+INFO:root:Monitor::monitor_process: unrecognized msg exit
