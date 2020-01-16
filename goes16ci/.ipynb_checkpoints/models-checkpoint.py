@@ -178,7 +178,7 @@ class ResNet(StandardConvNet):
             norm_axis = 1
         else:
             norm_axis = -1
-        if in_layer.shape[-1].value != filters:
+        if in_layer.shape[-1] != filters:
             x = Conv2D(filters, self.filter_width, data_format=self.data_format, padding="same")(in_layer)
         else:
             x = in_layer
