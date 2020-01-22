@@ -7,7 +7,7 @@ conv_net_parameters:
   use_dropout: 0
   dropout_alpha: 0.1
   verbose: 1
-  epochs: 2 #switch to 10 and see what happens, document difference
+  epochs: 10 #switch to 10 and see what happens, document difference
   learning_rate: 0.0001
   batch_size: 1024
   loss: "binary_crossentropy"
@@ -15,7 +15,7 @@ conv_net_parameters:
 cpu: 0 #can set to zero
 num_cpus: 1
 single_gpu: 1
-multi_gpu: 0 #can set to zero #changed back to zero
+multi_gpu: 0 #can set to zero 
 num_gpus: 8
 dtype: "float32"
 random_seed: 4832

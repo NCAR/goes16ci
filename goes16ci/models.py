@@ -259,9 +259,9 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
             save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
             sess.close()
     elif num_gpus > 1: 
-        config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=False)
+        config = tf.compat.v1.ConfigProto(allow_soft_placement=False, log_device_placement=False)
         config.gpu_options.allow_growth = True
-        sess = tf.Session(config=config)
+        sess = tf.compat.v1.Session(config=config)
         K.set_session(sess)
         tf.set_random_seed(seed)
         K.set_floatx(dtype)

@@ -9,7 +9,7 @@
 #SBATCH --exclusive
 #SBATCH --mem=256G
 module purge
-module load gnu/7.3.0 openmpi python/3.7.5 cuda/10.0
+module load gnu/7.3.0 openmpi python/3.6.8 cuda/10.0
 export PATH="/glade/u/home/gwallach/.conda/envs/goes16/bin:$PATH"
 source activate goes16
 cd ~/goes16ci
