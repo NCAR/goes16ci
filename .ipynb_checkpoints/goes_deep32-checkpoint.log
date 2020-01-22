@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "goes16_deep_learning_benchmark_32.py", line 6, in <module>
-    import tensorflow as tf
-ImportError: No module named tensorflow
