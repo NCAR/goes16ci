@@ -18,51 +18,7 @@ Python libraries:
 * ipython 
 * jupyter (for interactive visualization of neural networks)
 
-## Setup from Scratch
-
-* Install Python 3.6 on your machine. I recommend the Miniconda Python installer available
-[here](https://docs.conda.io/en/latest/miniconda.html).
-
-* Create a benchmark environment: `conda create -n goes16 python=3.6`
-
-* Once the environment is installed activate it on your machine:
-`source activate goes16`
-
-* Install the needed Python libraries from conda
-
-```bash
-conda install -c conda-forge --yes \
-    pip \
-    ipython \
-    jupyter \
-    numpy \
-    scipy \
-    matplotlib \
-    xarray \
-    netcdf4 \
-    pandas \
-    pyyaml \
-    dask \
-    distributed \
-    scikit-learn \
-    pyproj
-```
-
-* Make sure the CUDA kernel and CUDA toolkit are installed on your system and know the path
-and versions. The tensorflow 1.13 binary is built with CUDA 10 while tensorflow 1.12 is built with CUDA 9.
-Use 1.12 or 1.13 depending on which version your system has available or build tensorflow from source
-to maximize performance.
-
-* Install the tensorflow-gpu binary and keras. For more detailed installation instructions 
-visit the [tensorflow website](https://www.tensorflow.org/install/gpu).
-```bash
-# If you have CUDA 10 installed
-pip install "tensorflow-gpu==1.13"
-# If you have CUDA 9 installed
-pip install "tensorflow-gpu==1.12"
-# Install keras
-pip install keras
-```
+## Run Benchmark Script
 
 * Clone the goes16ci git repository to your home directory.
 ```bash
