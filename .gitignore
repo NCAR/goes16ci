@@ -20,6 +20,7 @@ parts/
 sdist/
 var/
 wheels/
+dask-worker-space/
 pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
