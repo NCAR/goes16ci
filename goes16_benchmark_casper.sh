@@ -16,4 +16,3 @@ ncar_pylib
 python setup.py install
 python -u goes16_deep_learning_benchmark_32.py >& goes_deep32.log
 python -u goes16_deep_learning_benchmark_64.py >& goes_deep64.log
-#python -u goes16_deep_learning_benchmark_128.py >& goes_deep.log
