@@ -16,12 +16,13 @@ from datetime import datetime
 import platform
 from multiprocessing import Pipe, Process
 import traceback
+import keras
 
 
 def main():
-    # read config file
+    # read config file 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", default="benchmark_config.yml", help="Config yaml file")
+    parser.add_argument("-c", "--config", default="benchmark_config_64.yml", help="Config yaml file")
     args = parser.parse_args()
     with open(args.config, "r") as config_file:
         config = yaml.load(config_file, Loader=yaml.Loader) 
@@ -72,7 +73,7 @@ def main():
             logging.info("CPU Training")
             block_name = "cpu_training"
             start_timing(benchmark_data, block_name, parent_p, out_path)
-            epoch_times = train_conv_net_cpu(train_data_scaled, train_counts,
+            epoch_times, batch_loss, epoch_loss = train_conv_net_cpu(train_data_scaled, train_counts,
                                              val_data_scaled, val_counts, config["conv_net_parameters"],
                                              config["num_cpus"], config["random_seed"])
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
@@ -86,7 +87,7 @@ def main():
                 block_name = "gpu_{0:02d}_training".format(gpu_num)
                 logging.info("Multi GPU Training {0:02d}".format(gpu_num))
                 start_timing(benchmark_data, block_name, parent_p, out_path)
-                epoch_times = train_conv_net_gpu(train_data_scaled, train_counts,
+                epoch_times, batch_loss, epoch_loss = train_conv_net_gpu(train_data_scaled, train_counts,
                                                  val_data_scaled, val_counts, config["conv_net_parameters"],
                                                  gpu_num, config["random_seed"], dtype=config["dtype"])
                 end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
@@ -95,7 +96,7 @@ def main():
             logging.info("Single GPU Training")
             block_name = "gpu_{0:02d}_training".format(1)
             start_timing(benchmark_data, block_name, parent_p, out_path)
-            epoch_times = train_conv_net_gpu(train_data_scaled, train_counts,
+            epoch_times, batch_loss, epoch_loss = train_conv_net_gpu(train_data_scaled, train_counts,
                             val_data_scaled, val_counts, config["conv_net_parameters"],
                             1, config["random_seed"], dtype=config["dtype"])
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
@@ -103,11 +104,12 @@ def main():
         # Save benchmark data
         parent_p.send("exit")
         monitor_proc.join()
-
+        benchmark_data["batch_loss"] = batch_loss[-1].item()
+        benchmark_data["epoch_loss"] = epoch_loss[-1].item()
         output_filename = str(join(config["out_path"], "goes_benchmark_data_{0}.yml".format(datetime.utcnow().strftime("%Y%m%d_%H%M%S"))))
         logging.info("Saving benchmark data to {output_filename}".format(output_filename=output_filename))
         with open(output_filename, "w") as output_file:
-            yaml.dump(benchmark_data, output_file, Dumper=yaml.Dumper)
+            yaml.dump(benchmark_data, output_file,Dumper=yaml.Dumper)
         print_summary(benchmark_data)
     except Exception as e:
         logging.error(traceback.format_exc())

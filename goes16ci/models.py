@@ -12,6 +12,17 @@ from time import perf_counter
 import logging
 
 
+class LossHistory(Callback):
+    def on_train_begin(self, logs={}):
+        self.losses = []
+        self.val_losses = []
+
+    def on_batch_end(self, batch, logs={}):
+        self.losses.append(logs.get('loss'))
+    
+    def on_epoch_end(self, epoch, logs={}):
+        self.val_losses.append(logs.get("val_loss"))
+
 class TimeHistory(Callback):
     def __init__(self):
         self.times = []
@@ -72,6 +83,7 @@ class StandardConvNet(object):
         self.model = None
         self.parallel_model = None
         self.time_history = TimeHistory()
+        self.loss_history = LossHistory()
         self.verbose = verbose
 
     def build_network(self, input_shape, output_size):
@@ -149,7 +161,7 @@ class StandardConvNet(object):
             val_data = (val_x, val_y)
 
         self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
-                       validation_data=val_data, callbacks=[self.time_history])
+                       validation_data=val_data, callbacks=[self.time_history,self.loss_history])
 
     def predict(self, x, y):
         return self.model.predict(x, y, batch_size=self.batch_size)
@@ -178,7 +190,7 @@ class ResNet(StandardConvNet):
             norm_axis = 1
         else:
             norm_axis = -1
-        if in_layer.shape[-1].value != filters:
+        if in_layer.shape[-1] != filters:
             x = Conv2D(filters, self.filter_width, data_format=self.data_format, padding="same")(in_layer)
         else:
             x = in_layer
@@ -233,20 +245,23 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
         scn = ResNet(**conv_net_hyperparameters)
         scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
         epoch_times = scn.time_history.times
+        batch_loss = scn.loss_history.losses
+        epoch_loss = scn.loss_history.val_losses
     sess.close()
-    return epoch_times
+    return epoch_times, batch_loss, epoch_loss
 
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
-                       conv_net_hyperparameters, num_gpus, seed, dtype="float32", cpu_relocation=False, cpu_merge=False):
+                       conv_net_hyperparameters, num_gpus, seed,
+                       dtype="float32", cpu_relocation=False, cpu_merge=False):
     
     np.random.seed(seed)
     if num_gpus == 1:
-        config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=False)
+        config = tf.compat.v1.ConfigProto(allow_soft_placement=False, log_device_placement=False)
         config.gpu_options.allow_growth = True
-        sess = tf.Session(config=config)
-        K.set_session(sess)
-        tf.set_random_seed(seed)
+        sess = tf.compat.v1.Session(config=config)
+        tf.compat.v1.keras.backend.set_session(sess)
+        tf.compat.v1.set_random_seed(seed)
         K.set_floatx(dtype)
 
         with tf.device("/device:GPU:0"):
@@ -254,14 +269,16 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
             #scn = StandardConvNet(**conv_net_hyperparameters)
             scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
             epoch_times = scn.time_history.times
+            batch_loss = scn.loss_history.losses
+            epoch_loss = scn.loss_history.val_losses
         logging.info(scn.model.summary())
         if scn is not None:
             save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
             sess.close()
     elif num_gpus > 1: 
-        config = tf.ConfigProto(allow_soft_placement=False, log_device_placement=False)
+        config = tf.compat.v1.ConfigProto(allow_soft_placement=False, log_device_placement=False)
         config.gpu_options.allow_growth = True
-        sess = tf.Session(config=config)
+        sess = tf.compat.v1.Session(config=config)
         K.set_session(sess)
         tf.set_random_seed(seed)
         K.set_floatx(dtype)
@@ -274,16 +291,20 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         opt = Adam(lr=scn.learning_rate)
         mg_model.compile(opt, scn.loss, metrics=scn.metrics)
         mg_model.fit(train_data, train_labels, batch_size=scn.batch_size, epochs=scn.epochs,
-                     callbacks=[scn.time_history])
+                     callbacks=[scn.time_history,scn.loss_history])
         logging.info(scn.model.summary())
         epoch_times = scn.time_history.times
+        batch_loss = scn.loss_history.losses
+        epoch_loss = scn.loss_history.val_losses
         if scn is not None:
             save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
             sess.close()
     else:
         print("Number of GPUs set to 0")
         epoch_times = []
-    return epoch_times
+        batch_loss = []
+        epoch_loss = []
+    return epoch_times, batch_loss, epoch_loss 
 
 
 class MinMaxScaler2D(object):
