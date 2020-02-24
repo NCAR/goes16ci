@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from goes16ci.lightning import create_glm_grids
 from goes16ci.imager import extract_abi_patches

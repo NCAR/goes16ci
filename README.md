@@ -63,6 +63,7 @@ pip install "tensorflow-gpu==1.12"
 # Install keras
 pip install keras
 ```
+## Run Benchmark Script
 
 * Clone the goes16ci git repository to your home directory.
 ```bash
