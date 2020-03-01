@@ -12,7 +12,7 @@ before_install:
 install:
   - conda create -n test --yes -c conda-forge python=$PYTHON_VERSION pip numpy scipy matplotlib pandas xarray dask pyyaml
   - source activate test
-  - pip install tensorflow==TENSORFLOW_VERSION
+  - pip install tensorflow==$TENSORFLOW_VERSION
   - pip install pytest
   - pip install .
   - python download_data.py
