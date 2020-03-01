@@ -16,13 +16,12 @@ from datetime import datetime
 import platform
 from multiprocessing import Pipe, Process
 import traceback
-import keras
 
 
 def main():
     # read config file 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", default="benchmark_config_64.yml", help="Config yaml file")
+    parser.add_argument("-c", "--config", default="benchmark_config_default.yml", help="Config yaml file")
     args = parser.parse_args()
     with open(args.config, "r") as config_file:
         config = yaml.load(config_file, Loader=yaml.Loader) 
@@ -67,6 +66,8 @@ def main():
     dl_monitor = Monitor(child_p)
     monitor_proc = Process(target=dl_monitor.run)
     monitor_proc.start()
+    batch_loss = None
+    epoch_loss = None
     try:
         # CPU training
         if config["cpu"]:

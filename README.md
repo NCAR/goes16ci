@@ -4,14 +4,13 @@ The GOES 16 Lightning Count Prediction benchmark is a deep learning benchmark fo
 used for atmospheric science problems. 
 
 ## Requirements
-The code is designed to run on Python 3.6. It requires the following
+The code is designed to run on Python 3.6 and 3.7. It requires the following
 Python libraries:
 * numpy
 * scipy
 * pandas
 * xarray
-* tensorflow
-* keras
+* tensorflow>=1.15.1
 * scikit-learn
 * pyproj
 * dask distributed (for data processing)
@@ -49,19 +48,15 @@ conda install -c conda-forge --yes \
 ```
 
 * Make sure the CUDA kernel and CUDA toolkit are installed on your system and know the path
-and versions. The tensorflow 1.13 binary is built with CUDA 10 while tensorflow 1.12 is built with CUDA 9.
-Use 1.12 or 1.13 depending on which version your system has available or build tensorflow from source
-to maximize performance.
+and versions. 
 
-* Install the tensorflow-gpu binary and keras. For more detailed installation instructions 
+* Install the tensorflow-gpu binary (if installing tensorflow 1.15) or tensorflow binary (if tensorflow 2). For more detailed installation instructions 
 visit the [tensorflow website](https://www.tensorflow.org/install/gpu).
 ```bash
 # If you have CUDA 10 installed
-pip install "tensorflow-gpu==1.13"
-# If you have CUDA 9 installed
-pip install "tensorflow-gpu==1.12"
-# Install keras
-pip install keras
+pip install "tensorflow-gpu==1.15"
+# If you plan to use tensorflow 2
+pip install tensorflow
 ```
 ## Run Benchmark Script
 
@@ -74,7 +69,7 @@ cd goes16ci
 
 * Install the goes16ci library
 ```bash
-python setup.py install
+pip install .
 ```
 
 * Download the GOES16 patch files. You will need about 8 GB free to download 
@@ -89,7 +84,7 @@ python goes16_deep_learning_benchmark.py
 ```
 
 * If you want to modify the neural network or other properties of the script,
-you can make a copy of benchmark_config.yml and modify it. To run the script with the
+you can make a copy of benchmark_config_default.yml and modify it. To run the script with the
 new config file:
 ```bash
 python goes16_deep_learning_benchmark.py -c config_file.yml
