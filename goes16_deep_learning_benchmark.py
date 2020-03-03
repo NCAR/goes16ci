@@ -16,13 +16,12 @@ from datetime import datetime
 import platform
 from multiprocessing import Pipe, Process
 import traceback
-import keras
 
 
 def main():
     # read config file 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", default="benchmark_config_64.yml", help="Config yaml file")
+    parser.add_argument("-c", "--config", default="benchmark_config_default.yml", help="Config yaml file")
     args = parser.parse_args()
     with open(args.config, "r") as config_file:
         config = yaml.load(config_file, Loader=yaml.Loader) 
@@ -46,7 +45,11 @@ def main():
     benchmark_data["system"].update(**get_cuda_version())
     benchmark_data["system"]["gpu_topology"] = get_gpu_topo()
     logging.info("Begin serial load data")
-    all_data, all_counts, all_time = load_data_serial(config["data_path"])
+    if "start_date" in config.keys():
+        all_data, all_counts, all_time = load_data_serial(config["data_path"], start_date=config["start_date"],
+                                                          end_date=config["end_date"])
+    else:
+        all_data, all_counts, all_time = load_data_serial(config["data_path"])
     if not exists(config["out_path"]):
         os.makedirs(config["out_path"])
     # Split training and validation data
@@ -67,6 +70,8 @@ def main():
     dl_monitor = Monitor(child_p)
     monitor_proc = Process(target=dl_monitor.run)
     monitor_proc.start()
+    batch_loss = None
+    epoch_loss = None
     try:
         # CPU training
         if config["cpu"]:
