@@ -45,7 +45,11 @@ def main():
     benchmark_data["system"].update(**get_cuda_version())
     benchmark_data["system"]["gpu_topology"] = get_gpu_topo()
     logging.info("Begin serial load data")
-    all_data, all_counts, all_time = load_data_serial(config["data_path"])
+    if "start_date" in config.keys():
+        all_data, all_counts, all_time = load_data_serial(config["data_path"], start_date=config["start_date"],
+                                                          end_date=config["end_date"])
+    else:
+        all_data, all_counts, all_time = load_data_serial(config["data_path"])
     if not exists(config["out_path"]):
         os.makedirs(config["out_path"])
     # Split training and validation data
