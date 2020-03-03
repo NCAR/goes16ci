@@ -1,11 +1,11 @@
 log_level: 20
 data_path: "data/" #change to ABI directory
-parallel_processes: 2
-split_date: "2018-04-12"
+parallel_processes: 1
+split_date: "2018-04-10"
 start_date: "2018-04-02"
-end_date: "2018-04-20"
+end_date: "2018-04-14"
 conv_net_parameters:
-  min_filters: 8
+  min_filters: 4
   filter_growth_rate: 1.5
   filter_width: 3
   use_dropout: 0
@@ -13,12 +13,12 @@ conv_net_parameters:
   verbose: 1
   min_data_width: 16
   epochs: 2
-  learning_rate: 0.001
-  batch_size: 2048
+  learning_rate: 0.01
+  batch_size: 256
   loss: "binary_crossentropy"
   metrics: ["mean_squared_error"]
 cpu: 1
-num_cpus: 2
+num_cpus: 1
 single_gpu: 0
 multi_gpu: 0 #can set to zero
 num_gpus: 8
