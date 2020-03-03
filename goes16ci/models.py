@@ -1,11 +1,11 @@
 import tensorflow as tf
-from keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, Add
-from keras.layers import BatchNormalization
-from keras.models import Model, save_model
-from keras.optimizers import Adam, SGD
-import keras.backend as K
-from keras.callbacks import Callback
-from keras.utils import multi_gpu_model
+from tensorflow.keras.layers import Dense, Conv2D, Activation, Input, Flatten, AveragePooling2D, MaxPool2D, LeakyReLU, Dropout, Add
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.models import Model, save_model
+from tensorflow.keras.optimizers import Adam, SGD
+import tensorflow.keras.backend as K
+from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.utils import multi_gpu_model
 import numpy as np
 import pandas as pd
 from time import perf_counter
@@ -236,10 +236,10 @@ class ResNet(StandardConvNet):
 def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
                        conv_net_hyperparameters, num_processors, seed):
     np.random.seed(seed)
-    tf.set_random_seed(seed)
-    sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=False, intra_op_parallelism_threads=num_processors,
+    tf.compat.v1.set_random_seed(seed)
+    sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(allow_soft_placement=False, intra_op_parallelism_threads=num_processors,
                                                 inter_op_parallelism_threads=1))
-    K.set_session(sess)
+    tf.compat.v1.keras.backend.set_session(sess)
 
     with tf.device("/cpu:0"):
         scn = ResNet(**conv_net_hyperparameters)
@@ -279,8 +279,8 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         config = tf.compat.v1.ConfigProto(allow_soft_placement=False, log_device_placement=False)
         config.gpu_options.allow_growth = True
         sess = tf.compat.v1.Session(config=config)
-        K.set_session(sess)
-        tf.set_random_seed(seed)
+        tf.compat.v1.set_session(sess)
+        tf.compat.v1.set_random_seed(seed)
         K.set_floatx(dtype)
         with tf.device("/cpu:0"):
             scn = ResNet(**conv_net_hyperparameters)
