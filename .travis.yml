@@ -16,6 +16,6 @@ install:
   - pip install .
   - python download_data.py
 script:
-  - python goes16_deep_learning_benchmark.py
+  - python goes16_deep_learning_benchmark.py -c benchmark_config_travis.yml
 notifications:
   email: true

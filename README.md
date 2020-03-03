@@ -3,6 +3,11 @@
 The GOES 16 Lightning Count Prediction benchmark is a deep learning benchmark for HPC systems 
 used for atmospheric science problems. 
 
+## Contributors
+* David John Gagne
+* Bill Anderson
+* Gunther Wallach
+
 ## Requirements
 The code is designed to run on Python 3.6 and 3.7. It requires the following
 Python libraries:
