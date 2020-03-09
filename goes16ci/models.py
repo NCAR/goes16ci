@@ -248,7 +248,7 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
         batch_loss = scn.loss_history.losses
         epoch_loss = scn.loss_history.val_losses
     sess.close()
-    return epoch_times, batch_loss, epoch_loss
+    return epoch_times, batch_loss, epoch_loss, val_labels, val_data
 
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
@@ -304,7 +304,7 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         epoch_times = []
         batch_loss = []
         epoch_loss = []
-    return epoch_times, batch_loss, epoch_loss 
+    return epoch_times, batch_loss, epoch_loss, val_labels, val_data 
 
 
 class MinMaxScaler2D(object):

@@ -17,6 +17,7 @@ import platform
 from multiprocessing import Pipe, Process
 import traceback
 import keras
+import csv
 
 
 def main():
@@ -73,9 +74,11 @@ def main():
             logging.info("CPU Training")
             block_name = "cpu_training"
             start_timing(benchmark_data, block_name, parent_p, out_path)
-            epoch_times, batch_loss, epoch_loss = train_conv_net_cpu(train_data_scaled, train_counts,
+            epoch_times, batch_loss, epoch_loss, val_labels, val_data = train_conv_net_cpu(train_data_scaled, train_counts,
                                              val_data_scaled, val_counts, config["conv_net_parameters"],
                                              config["num_cpus"], config["random_seed"])
+            val_csv = pd.concat([val_labels, val_data])
+            val_csv.to_csv('validation_set_predictions.csv')
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
         # CPU inference
 
@@ -87,20 +90,25 @@ def main():
                 block_name = "gpu_{0:02d}_training".format(gpu_num)
                 logging.info("Multi GPU Training {0:02d}".format(gpu_num))
                 start_timing(benchmark_data, block_name, parent_p, out_path)
-                epoch_times, batch_loss, epoch_loss = train_conv_net_gpu(train_data_scaled, train_counts,
+                epoch_times, batch_loss, epoch_loss, val_labels, val_data = train_conv_net_gpu(train_data_scaled, train_counts,
                                                  val_data_scaled, val_counts, config["conv_net_parameters"],
                                                  gpu_num, config["random_seed"], dtype=config["dtype"])
+                val_csv = pd.concat([val_labels, val_data])
+                val_csv.to_csv('validation_set_predictions.csv')
                 end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
         # Single GPU Training
         if config["single_gpu"] and has_gpus:
             logging.info("Single GPU Training")
             block_name = "gpu_{0:02d}_training".format(1)
             start_timing(benchmark_data, block_name, parent_p, out_path)
-            epoch_times, batch_loss, epoch_loss = train_conv_net_gpu(train_data_scaled, train_counts,
+            epoch_times, batch_loss, epoch_loss, val_labels, val_labels = train_conv_net_gpu(train_data_scaled, train_counts,
                             val_data_scaled, val_counts, config["conv_net_parameters"],
                             1, config["random_seed"], dtype=config["dtype"])
+            val_csv = pd.concat([val_labels, val_data])
+            val_csv.to_csv('validation_set_predictions.csv')
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
-
+            
+            
         # Save benchmark data
         parent_p.send("exit")
         monitor_proc.join()
