@@ -56,13 +56,17 @@ class StandardConvNet(object):
         pooling (str): If mean, then :class:`keras.layers.AveragePooling2D` is used for pooling. If max, then :class:`keras.layers.MaxPool2D` is used.
         use_dropout (bool): If True, then a :class:`keras.layers.Dropout` layer is inserted between the final convolution block 
             and the output :class:`keras.laysers.Dense` layer.
-
+        dropout_alpha (float): Dropout rate ranging from 0 to 1.
+        data_format (str): "channels_last" or "channels_first"
+        optimizer (str): if "adam" uses Adam, otherwise uses SGD.
+        loss (str): one of the built in keras losses
+        leaky_alpha (float): scaling factor for LeakyReLU activation
     """
     def __init__(self, min_filters=16, filter_growth_rate=2, filter_width=5, min_data_width=4,
                  hidden_activation="relu", output_activation="sigmoid",
                  pooling="mean", use_dropout=False, dropout_alpha=0.0,
                  data_format="channels_last", optimizer="adam", loss="mse", leaky_alpha=0.1, metrics=None, 
-                 learning_rate=0.001, batch_size=1024, epochs=10, verbose=0):
+                 learning_rate=0.001, batch_size=1024, epochs=10, verbose=0, sgd_momentum=0.99):
         self.min_filters = min_filters
         self.filter_width = filter_width
         self.filter_growth_rate = filter_growth_rate
@@ -80,6 +84,7 @@ class StandardConvNet(object):
         self.leaky_alpha = leaky_alpha
         self.batch_size = batch_size
         self.epochs = epochs
+        self.sgd_momentum = sgd_momentum
         self.model = None
         self.parallel_model = None
         self.time_history = TimeHistory()
@@ -161,7 +166,7 @@ class StandardConvNet(object):
             val_data = (val_x, val_y)
 
         self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
-                       validation_data=val_data, callbacks=[self.time_history,self.loss_history])
+                       validation_data=val_data, callbacks=[self.time_history, self.loss_history])
 
     def predict(self, x, y):
         return self.model.predict(x, y, batch_size=self.batch_size)
@@ -266,7 +271,6 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
 
         with tf.device("/device:GPU:0"):
             scn = ResNet(**conv_net_hyperparameters)
-            #scn = StandardConvNet(**conv_net_hyperparameters)
             scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
             epoch_times = scn.time_history.times
             batch_loss = scn.loss_history.losses
@@ -279,19 +283,19 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         config = tf.compat.v1.ConfigProto(allow_soft_placement=False, log_device_placement=False)
         config.gpu_options.allow_growth = True
         sess = tf.compat.v1.Session(config=config)
-        tf.compat.v1.set_session(sess)
+        tf.compat.v1.keras.backend.set_session(sess)
         tf.compat.v1.set_random_seed(seed)
         K.set_floatx(dtype)
-        with tf.device("/cpu:0"):
+        gpu_devices = [f"/gpu:{g:d}" for g in range(num_gpus)]
+        mirrored_strategy = tf.distribute.MirroredStrategy(devices=gpu_devices)
+        with mirrored_strategy.scope():
             scn = ResNet(**conv_net_hyperparameters)
             scn.batch_size *= num_gpus
+            scn.learning_rate *= num_gpus
             x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
             scn.build_network(x_shape, y_size)
-        mg_model = multi_gpu_model(scn.model, gpus=num_gpus, cpu_merge=cpu_merge, cpu_relocation=cpu_relocation)
-        opt = Adam(lr=scn.learning_rate)
-        mg_model.compile(opt, scn.loss, metrics=scn.metrics)
-        mg_model.fit(train_data, train_labels, batch_size=scn.batch_size, epochs=scn.epochs,
-                     callbacks=[scn.time_history,scn.loss_history])
+            scn.compile_model()
+        scn.fit(train_data, train_labels)
         logging.info(scn.model.summary())
         epoch_times = scn.time_history.times
         batch_loss = scn.loss_history.losses
