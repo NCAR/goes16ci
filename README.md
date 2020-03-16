@@ -1,5 +1,7 @@
 # GOES 16 Lightning Count Prediction Benchmark
 
+[![Build Status](https://travis-ci.com/NCAR/goes16ci.svg?branch=master)](https://travis-ci.com/NCAR/goes16ci)
+
 The GOES 16 Lightning Count Prediction benchmark is a deep learning benchmark for HPC systems 
 used for atmospheric science problems. 
 
@@ -15,7 +17,7 @@ Python libraries:
 * scipy
 * pandas
 * xarray
-* tensorflow>=1.15.1
+* tensorflow>=2.0.0
 * scikit-learn
 * pyproj
 * dask distributed (for data processing)
@@ -24,10 +26,10 @@ Python libraries:
 
 ## Setup from Scratch
 
-* Install Python 3.6 on your machine. I recommend the Miniconda Python installer available
+* Install Python 3.7 on your machine. I recommend the Miniconda Python installer available
 [here](https://docs.conda.io/en/latest/miniconda.html).
 
-* Create a benchmark environment: `conda create -n goes16 python=3.6`
+* Create a benchmark environment: `conda create -n goes16 python=3.7`
 
 * Once the environment is installed activate it on your machine:
 `source activate goes16`
@@ -58,8 +60,6 @@ and versions.
 * Install the tensorflow-gpu binary (if installing tensorflow 1.15) or tensorflow binary (if tensorflow 2). For more detailed installation instructions 
 visit the [tensorflow website](https://www.tensorflow.org/install/gpu).
 ```bash
-# If you have CUDA 10 installed
-pip install "tensorflow-gpu==1.15"
 # If you plan to use tensorflow 2
 pip install tensorflow
 ```
@@ -92,7 +92,7 @@ python goes16_deep_learning_benchmark.py
 you can make a copy of benchmark_config_default.yml and modify it. To run the script with the
 new config file:
 ```bash
-python goes16_deep_learning_benchmark.py -c config_file.yml
+python goes16_deep_learning_benchmark.py -c benchmark_config_default.yml
 ```
 
 ## Setup on Cheyenne/Casper

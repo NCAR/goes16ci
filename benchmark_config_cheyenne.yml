@@ -14,10 +14,10 @@ conv_net_parameters:
   metrics: ["mean_squared_error"]
 cpu: 1
 num_cpus: 35
-single_gpu: 1
-multi_gpu: 1 #can set to zero
+single_gpu: 0
+multi_gpu: 0
 num_gpus: 8
 scale_batch_size: 1
 dtype: "float32"
 random_seed: 4832
-out_path: "./benchmark_output_default"
+out_path: "./benchmark_output_cheyenne"
