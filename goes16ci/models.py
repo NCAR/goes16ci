@@ -5,7 +5,6 @@ from tensorflow.keras.models import Model, save_model
 from tensorflow.keras.optimizers import Adam, SGD
 import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import Callback
-from tensorflow.keras.utils import multi_gpu_model
 import numpy as np
 import pandas as pd
 from time import perf_counter
