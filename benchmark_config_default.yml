@@ -3,7 +3,7 @@ data_path: "data/" #change to ABI directory
 parallel_processes: 35
 split_date: "2018-05-20"
 conv_net_parameters:
-  min_filters: 16
+  min_filters: 32
   use_dropout: 0
   dropout_alpha: 0.1
   verbose: 1
