@@ -253,7 +253,10 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
             tf.config.experimental.set_memory_growth(device, True)
     tf.config.threading.set_inter_op_parallelism_threads(inter_op_threads)
     tf.config.threading.set_intra_op_parallelism_threads(num_processors)
-    tf.random.set_seed(seed)
+    if tf.__version__[0] == "1":
+        tf.set_random_seed(seed)
+    else:
+        tf.random.set_seed(seed)
     K.set_floatx(dtype)
     with tf.device("/CPU:0"):
         scn = ResNet(**conv_net_hyperparameters)
@@ -288,7 +291,10 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
     if num_gpus <= len(gpus):
         for device in gpus:
             tf.config.experimental.set_memory_growth(device, True)
-        tf.random.set_seed(seed)
+        if tf.__version__[0] == "1":
+            tf.set_random_seed(seed)
+        else:
+            tf.random.set_seed(seed)
         K.set_floatx(dtype)
         if num_gpus == 1:
             with tf.device("/device:GPU:0"):
