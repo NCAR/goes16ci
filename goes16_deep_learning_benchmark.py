@@ -45,9 +45,17 @@ def main():
     benchmark_data["system"].update(**get_cuda_version())
     benchmark_data["system"]["gpu_topology"] = get_gpu_topo()
     logging.info("Begin serial load data")
-    all_data, all_counts, all_time = load_data_serial(config["data_path"])
+    if "start_date" in config.keys():
+        all_data, all_counts, all_time = load_data_serial(config["data_path"], start_date=config["start_date"],
+                                                          end_date=config["end_date"])
+    else:
+        all_data, all_counts, all_time = load_data_serial(config["data_path"])
     if not exists(config["out_path"]):
         os.makedirs(config["out_path"])
+    if "scale_batch_size" in config.keys():
+        scale_batch_size = config["scale_batch_size"]
+    else:
+        scale_batch_size = 1
     # Split training and validation data
     logging.info("Split training and testing data")
     train_indices = np.where(all_time < pd.Timestamp(config["split_date"]))[0]
@@ -90,7 +98,7 @@ def main():
                 start_timing(benchmark_data, block_name, parent_p, out_path)
                 epoch_times, batch_loss, epoch_loss = train_conv_net_gpu(train_data_scaled, train_counts,
                                                  val_data_scaled, val_counts, config["conv_net_parameters"],
-                                                 gpu_num, config["random_seed"], dtype=config["dtype"])
+                                                 gpu_num, config["random_seed"], dtype=config["dtype"], scale_batch_size=scale_batch_size)
                 end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
         # Single GPU Training
         if config["single_gpu"] and has_gpus:

@@ -10,13 +10,13 @@ before_install:
   - conda config --add channels conda-forge
   - conda config --set channel_priority strict
 install:
-  - conda create -n test --yes -c conda-forge python=$PYTHON_VERSION pip numpy scipy matplotlib pandas xarray dask pyyaml
+  - conda create -n test --yes -c conda-forge python=$PYTHON_VERSION pip numpy scipy matplotlib pandas xarray dask pyyaml netcdf4
   - source activate test
-  - pip install tensorflow==TENSORFLOW_VERSION
+  - pip install tensorflow==$TENSORFLOW_VERSION
   - pip install pytest
   - pip install .
   - python download_data.py
 script:
-  - python goes16_deep_learning_benchmark.py
+  - python goes16_deep_learning_benchmark.py -c benchmark_config_travis.yml
 notifications:
   email: true
