@@ -7,6 +7,7 @@
 #SBATCH --partition=dav
 #SBATCH --gres=gpu:v100:8
 #SBATCH --exclusive
+#SBATCH --reservation=casper_8xV100
 #SBATCH --mem=768G
 module load ncarenv/1.3 gnu/7.4.0 ncarcompilers/0.5.0 python/3.7.5 cuda/10.0
 ncar_pylib ncar_20191211 

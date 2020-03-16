@@ -239,75 +239,91 @@ class ResNet(StandardConvNet):
 
 
 def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
-                       conv_net_hyperparameters, num_processors, seed):
+                       conv_net_hyperparameters, num_processors, seed, dtype="float32", inter_op_threads=2):
+    """
+    Train a convolutional neural network on the CPU.
+    """
     np.random.seed(seed)
-    tf.compat.v1.set_random_seed(seed)
-    sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(allow_soft_placement=False, intra_op_parallelism_threads=num_processors,
-                                                inter_op_parallelism_threads=1))
-    tf.compat.v1.keras.backend.set_session(sess)
-
-    with tf.device("/cpu:0"):
+    if "get_visible_devices" in dir(tf.config.experimental):
+        gpus = tf.config.experimental.get_visible_devices("GPU")
+    else:
+        gpus = tf.config.get_visible_devices("GPU")
+    if len(gpus) > 0:
+        for device in gpus:
+            tf.config.experimental.set_memory_growth(device, True)
+    tf.config.threading.set_inter_op_parallelism_threads(inter_op_threads)
+    tf.config.threading.set_intra_op_parallelism_threads(num_processors)
+    tf.random.set_seed(seed)
+    K.set_floatx(dtype)
+    with tf.device("/CPU:0"):
         scn = ResNet(**conv_net_hyperparameters)
         scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
         epoch_times = scn.time_history.times
         batch_loss = scn.loss_history.losses
         epoch_loss = scn.loss_history.val_losses
-    sess.close()
     return epoch_times, batch_loss, epoch_loss
 
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                        conv_net_hyperparameters, num_gpus, seed,
-                       dtype="float32", cpu_relocation=False, cpu_merge=False):
-    
-    np.random.seed(seed)
-    if num_gpus == 1:
-        config = tf.compat.v1.ConfigProto(allow_soft_placement=False, log_device_placement=False)
-        config.gpu_options.allow_growth = True
-        sess = tf.compat.v1.Session(config=config)
-        tf.compat.v1.keras.backend.set_session(sess)
-        tf.compat.v1.set_random_seed(seed)
-        K.set_floatx(dtype)
+                       dtype="float32", scale_batch_size=1):
+    """
+    Trains convolutional neural network on one or more GPUs.
 
-        with tf.device("/device:GPU:0"):
-            scn = ResNet(**conv_net_hyperparameters)
-            scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
-            epoch_times = scn.time_history.times
-            batch_loss = scn.loss_history.losses
-            epoch_loss = scn.loss_history.val_losses
-        logging.info(scn.model.summary())
-        if scn is not None:
-            save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
-            sess.close()
-    elif num_gpus > 1: 
-        config = tf.compat.v1.ConfigProto(allow_soft_placement=False, log_device_placement=False)
-        config.gpu_options.allow_growth = True
-        sess = tf.compat.v1.Session(config=config)
-        tf.compat.v1.keras.backend.set_session(sess)
-        tf.compat.v1.set_random_seed(seed)
+    Args:
+        train_data: array of training data inputs as a data cube
+        train_labels: array of labels associated with each training example
+        val_data: array of validation data inputs
+        val_labels: array of validation data labels
+        conv_net_hyperparameters: dictionary of configuration settings for conv net
+        num_gpus: Maximum number of GPUs to test
+        seed: Random seed for both numpy and tensorflow
+        dtype: float datatype for neural nets
+    """
+    np.random.seed(seed)
+    if "get_visible_devices" in dir(tf.config.experimental):
+        gpus = tf.config.experimental.get_visible_devices("GPU")
+    else:
+        gpus = tf.config.get_visible_devices("GPU")
+    if num_gpus <= len(gpus):
+        for device in gpus:
+            tf.config.experimental.set_memory_growth(device, True)
+        tf.random.set_seed(seed)
         K.set_floatx(dtype)
-        gpu_devices = [f"/gpu:{g:d}" for g in range(num_gpus)]
-        mirrored_strategy = tf.distribute.MirroredStrategy(devices=gpu_devices)
-        with mirrored_strategy.scope():
-            scn = ResNet(**conv_net_hyperparameters)
-            scn.batch_size *= num_gpus
-            scn.learning_rate *= num_gpus
-            x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
-            scn.build_network(x_shape, y_size)
-            scn.compile_model()
-        scn.fit(train_data, train_labels)
-        logging.info(scn.model.summary())
-        epoch_times = scn.time_history.times
-        batch_loss = scn.loss_history.losses
-        epoch_loss = scn.loss_history.val_losses
-        if scn is not None:
-            save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
-            sess.close()
+        if num_gpus == 1:
+            with tf.device("/device:GPU:0"):
+                scn = ResNet(**conv_net_hyperparameters)
+                scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+                epoch_times = scn.time_history.times
+                batch_loss = scn.loss_history.losses
+                epoch_loss = scn.loss_history.val_losses
+                logging.info(scn.model.summary())
+                if scn is not None:
+                    save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
+        elif num_gpus > 1: 
+            gpu_devices = [gpu.name.replace("physical_", "") for gpu in gpus[:num_gpus]]
+            print("GPU Devices", gpu_devices, num_gpus)
+            mirrored_strategy = tf.distribute.MirroredStrategy(devices=gpu_devices)
+            with mirrored_strategy.scope():
+                scn = ResNet(**conv_net_hyperparameters)
+                if scale_batch_size > 0:
+                    scn.batch_size *= num_gpus
+                    scn.learning_rate *= num_gpus
+                x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
+                scn.build_network(x_shape, y_size)
+                scn.compile_model()
+                scn.fit(train_data, train_labels)
+                if scn is not None:
+                    save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus), save_format="h5")
+                logging.info(scn.model.summary())
+                epoch_times = scn.time_history.times
+                batch_loss = scn.loss_history.losses
+                epoch_loss = scn.loss_history.val_losses
     else:
         print("Number of GPUs set to 0")
-        epoch_times = []
-        batch_loss = []
-        epoch_loss = []
+        epoch_times = [-1]
+        batch_loss = [-1]
+        epoch_loss = [-1]
     return epoch_times, batch_loss, epoch_loss 
 
 

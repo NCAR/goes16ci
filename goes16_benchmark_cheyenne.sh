@@ -7,7 +7,6 @@
 #PBS -l select=1:ncpus=36
 #PBS -m abe
 #PBS -M dgagne@ucar.edu
-module purge
 export PATH=/glade/u/home/dgagne/miniconda3/envs/ml/bin:$PATH
 cd ~/goes16ci
 python setup.py install
