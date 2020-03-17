@@ -131,6 +131,8 @@ def get_gpu_names():
         gpu_name_list = gpu_name_str.strip().split("\n")
     return gpu_name_list
 
+
+
 def get_gpu_topo():
     """
     Get the names for each GPU on the system.
