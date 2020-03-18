@@ -261,8 +261,8 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
         scn = ResNet(**conv_net_hyperparameters)
         scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
         epoch_times = scn.time_history.times
-        batch_loss = scn.loss_history.losses
-        epoch_loss = scn.loss_history.val_losses
+        batch_loss = np.concatenate(scn.loss_history.losses).tolist()
+        epoch_loss = np.concatenate(scn.loss_history.val_losses).tolist()
     return epoch_times, batch_loss, epoch_loss
 
 
@@ -300,8 +300,8 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                 scn = ResNet(**conv_net_hyperparameters)
                 scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
                 epoch_times = scn.time_history.times
-                batch_loss = scn.loss_history.losses
-                epoch_loss = scn.loss_history.val_losses
+                batch_loss = np.concatenate(scn.loss_history.losses).tolist()
+                epoch_loss = np.concatenate(scn.loss_history.val_losses).tolist()
                 logging.info(scn.model.summary())
                 if scn is not None:
                     save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
@@ -325,7 +325,7 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                 batch_loss = scn.loss_history.losses
                 epoch_loss = scn.loss_history.val_losses
     else:
-        print("Number of GPUs set to 0")
+        print("No GPUs available")
         epoch_times = [-1]
         batch_loss = [-1]
         epoch_loss = [-1]

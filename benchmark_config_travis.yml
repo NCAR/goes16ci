@@ -1,6 +1,5 @@
 log_level: 20
 data_path: "data/" #change to ABI directory
-parallel_processes: 1
 split_date: "2018-04-10"
 start_date: "2018-04-02"
 end_date: "2018-04-14"

@@ -86,6 +86,9 @@ def main():
                                              val_data_scaled, val_counts, config["conv_net_parameters"],
                                              config["num_cpus"], config["random_seed"])
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
+            benchmark_data[block_name]["batch_loss"] = batch_loss
+            benchmark_data[block_name]["epoch_loss"] = epoch_loss
+
         # CPU inference
 
         # Multi GPU Training
@@ -100,6 +103,8 @@ def main():
                                                  val_data_scaled, val_counts, config["conv_net_parameters"],
                                                  gpu_num, config["random_seed"], dtype=config["dtype"], scale_batch_size=scale_batch_size)
                 end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
+                benchmark_data[block_name]["batch_loss"] = batch_loss
+                benchmark_data[block_name]["epoch_loss"] = epoch_loss
         # Single GPU Training
         if config["single_gpu"] and has_gpus:
             logging.info("Single GPU Training")
@@ -109,12 +114,12 @@ def main():
                             val_data_scaled, val_counts, config["conv_net_parameters"],
                             1, config["random_seed"], dtype=config["dtype"])
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
+            benchmark_data[block_name]["batch_loss"] = batch_loss
+            benchmark_data[block_name]["epoch_loss"] = epoch_loss
 
         # Save benchmark data
         parent_p.send("exit")
         monitor_proc.join()
-        benchmark_data["batch_loss"] = batch_loss[-1].item()
-        benchmark_data["epoch_loss"] = epoch_loss[-1].item()
         output_filename = str(join(config["out_path"], "goes_benchmark_data_{0}.yml".format(datetime.utcnow().strftime("%Y%m%d_%H%M%S"))))
         logging.info("Saving benchmark data to {output_filename}".format(output_filename=output_filename))
         with open(output_filename, "w") as output_file:
