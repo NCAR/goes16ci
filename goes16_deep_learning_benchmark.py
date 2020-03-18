@@ -9,7 +9,7 @@ import numpy as np
 from os.path import exists, join
 from goes16ci.data import load_data_serial
 from goes16ci.models import train_conv_net_cpu, train_conv_net_gpu, MinMaxScaler2D
-from goes16ci.monitor import Monitor, start_timing, end_timing, get_gpu_names, get_gpu_topo, get_cuda_version
+from goes16ci.monitor import Monitor, start_timing, end_timing, get_gpu_names, get_gpu_topo, get_cuda_version, get_cudnn_version, get_nccl_version
 import argparse
 import logging
 from datetime import datetime
@@ -27,9 +27,7 @@ def main():
         config = yaml.load(config_file, Loader=yaml.Loader) 
     out_path = config["out_path"]
     logging.basicConfig(stream=sys.stdout, level=config["log_level"])
-    print(repr(config["out_path"]))
     benchmark_data = dict()
-    print(config["out_path"], type(config["out_path"]))
     # load data serial
     benchmark_data["config"] = config
     benchmark_data["system"] = dict()
@@ -43,7 +41,12 @@ def main():
     if len(benchmark_data["system"]["gpus"]) == 0:
         has_gpus = False
     benchmark_data["system"].update(**get_cuda_version())
+    benchmark_data["system"]["cudnn_version"] = get_cudnn_version()
+    benchmark_data["system"]["nccl_version"] = get_nccl_version()
     benchmark_data["system"]["gpu_topology"] = get_gpu_topo()
+    for k, v in benchmark_data["system"].items():
+        print(k)
+        print(v)
     logging.info("Begin serial load data")
     if "start_date" in config.keys():
         all_data, all_counts, all_time = load_data_serial(config["data_path"], start_date=config["start_date"],
