@@ -19,12 +19,26 @@ def load_single_data_file(filename, image_variable="abi", count_variable="flash_
     return good_imagery, counts, time
 
 
-def load_data_serial(data_path, image_variable="abi", count_variable="flash_counts", time_variable="time"):
+def load_data_serial(data_path, image_variable="abi", count_variable="flash_counts", time_variable="time",
+                     start_date=None, end_date=None):
     data_files = sorted(glob(join(data_path, "*.nc")))
+    if len(data_files) == 0:
+        logging.error("No data files available in the data directory. Please run\npython download_data.py\n on an internet-connected node to retrieve the data.")
+        raise FileNotFoundError("No data files found in the data directory.")
     images_list = []
     counts_list = []
     time_list = []
+    if start_date is not None and end_date is not None:
+        start_date = pd.Timestamp(start_date)
+        end_date = pd.Timestamp(end_date)
+    else:
+        start_date = None
+        end_date = None
     for data_file in data_files:
+        if start_date is not None:
+            file_date = pd.Timestamp(data_file.split("/")[-1][:-3].split("_")[-1])
+            if (file_date < start_date) or (file_date > end_date):
+                continue
         logging.info(data_file)
         images, counts, time = load_single_data_file(data_file, image_variable=image_variable,
                                                      count_variable=count_variable, time_variable=time_variable)
