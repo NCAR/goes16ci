@@ -14,5 +14,5 @@ export PATH="/glade/u/home/gwallach/.conda/envs/goes16/bin:$PATH"
 module load ncarenv
 ncar_pylib
 python setup.py install
-python -u goes16_deep_learning_benchmark_32.py >& goes_deep32.log
+python -u goes16_deep_learning_benchmark.py -c benchmark_config_test.yml >& goes_deep32.log
 #python -u goes16_deep_learning_benchmark_64.py >& goes_deep64.log

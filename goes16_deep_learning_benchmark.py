@@ -1,3 +1,34 @@
+
+Skip to content
+
+    Why GitHub?
+                          
+
+
+                    
+Enterprise
+Explore
+                      
+
+                    
+Marketplace
+Pricing
+                       
+
+
+                        
+
+Sign in
+Sign up
+Code Issues 1 Pull requests 0 Projects 1 Actions Security Pulse
+Join GitHub today
+
+GitHub is home to over 40 million developers working together to host and review code, manage projects, and build software together.
+goes16ci/goes16_deep_learning_benchmark.py /
+djgagne@ou.edu Fixed remaining bugs and added nccl and cudnn version support e476db0 7 days ago
+@djgagne
+@guwa4340
+161 lines (152 sloc) 7.89 KB
 import sys
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -9,18 +40,13 @@ import numpy as np
 from os.path import exists, join
 from goes16ci.data import load_data_serial
 from goes16ci.models import train_conv_net_cpu, train_conv_net_gpu, MinMaxScaler2D
-from goes16ci.monitor import Monitor, start_timing, end_timing, get_gpu_names, get_gpu_topo, get_cuda_version
+from goes16ci.monitor import Monitor, start_timing, end_timing, get_gpu_names, get_gpu_topo, get_cuda_version, get_cudnn_version, get_nccl_version
 import argparse
 import logging
 from datetime import datetime
 import platform
 from multiprocessing import Pipe, Process
 import traceback
-<<<<<<< HEAD:goes16_deep_learning_benchmark_32.py
-import keras
-import csv
-=======
->>>>>>> 9696feac1e506a11afefcf9ac412b4c6329fedb4:goes16_deep_learning_benchmark.py
 
 
 def main():
@@ -32,9 +58,7 @@ def main():
         config = yaml.load(config_file, Loader=yaml.Loader) 
     out_path = config["out_path"]
     logging.basicConfig(stream=sys.stdout, level=config["log_level"])
-    print(repr(config["out_path"]))
     benchmark_data = dict()
-    print(config["out_path"], type(config["out_path"]))
     # load data serial
     benchmark_data["config"] = config
     benchmark_data["system"] = dict()
@@ -48,7 +72,12 @@ def main():
     if len(benchmark_data["system"]["gpus"]) == 0:
         has_gpus = False
     benchmark_data["system"].update(**get_cuda_version())
+    benchmark_data["system"]["cudnn_version"] = get_cudnn_version()
+    benchmark_data["system"]["nccl_version"] = get_nccl_version()
     benchmark_data["system"]["gpu_topology"] = get_gpu_topo()
+    for k, v in benchmark_data["system"].items():
+        print(k)
+        print(v)
     logging.info("Begin serial load data")
     if "start_date" in config.keys():
         all_data, all_counts, all_time = load_data_serial(config["data_path"], start_date=config["start_date"],
@@ -87,11 +116,9 @@ def main():
             logging.info("CPU Training")
             block_name = "cpu_training"
             start_timing(benchmark_data, block_name, parent_p, out_path)
-            epoch_times, batch_loss, epoch_loss, val_labels, val_data = train_conv_net_cpu(train_data_scaled, train_counts,
+            epoch_times, batch_loss, epoch_loss = train_conv_net_cpu(train_data_scaled, train_counts,
                                              val_data_scaled, val_counts, config["conv_net_parameters"],
                                              config["num_cpus"], config["random_seed"])
-            val_csv = pd.concat([val_labels, val_data])
-            val_csv.to_csv('validation_set_predictions.csv')
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
             benchmark_data[block_name]["batch_loss"] = batch_loss
             benchmark_data[block_name]["epoch_loss"] = epoch_loss
@@ -106,15 +133,9 @@ def main():
                 block_name = "gpu_{0:02d}_training".format(gpu_num)
                 logging.info("Multi GPU Training {0:02d}".format(gpu_num))
                 start_timing(benchmark_data, block_name, parent_p, out_path)
-                epoch_times, batch_loss, epoch_loss, val_labels, val_data = train_conv_net_gpu(train_data_scaled, train_counts,
+                epoch_times, batch_loss, epoch_loss = train_conv_net_gpu(train_data_scaled, train_counts,
                                                  val_data_scaled, val_counts, config["conv_net_parameters"],
-<<<<<<< HEAD:goes16_deep_learning_benchmark_32.py
-                                                 gpu_num, config["random_seed"], dtype=config["dtype"])
-                val_csv = pd.concat([val_labels, val_data])
-                val_csv.to_csv('validation_set_predictions.csv')
-=======
                                                  gpu_num, config["random_seed"], dtype=config["dtype"], scale_batch_size=scale_batch_size)
->>>>>>> 9696feac1e506a11afefcf9ac412b4c6329fedb4:goes16_deep_learning_benchmark.py
                 end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
                 benchmark_data[block_name]["batch_loss"] = batch_loss
                 benchmark_data[block_name]["epoch_loss"] = epoch_loss
@@ -123,20 +144,13 @@ def main():
             logging.info("Single GPU Training")
             block_name = "gpu_{0:02d}_training".format(1)
             start_timing(benchmark_data, block_name, parent_p, out_path)
-            epoch_times, batch_loss, epoch_loss, val_labels, val_labels = train_conv_net_gpu(train_data_scaled, train_counts,
+            epoch_times, batch_loss, epoch_loss = train_conv_net_gpu(train_data_scaled, train_counts,
                             val_data_scaled, val_counts, config["conv_net_parameters"],
                             1, config["random_seed"], dtype=config["dtype"])
-            val_csv = pd.concat([val_labels, val_data])
-            val_csv.to_csv('validation_set_predictions.csv')
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
-<<<<<<< HEAD:goes16_deep_learning_benchmark_32.py
-            
-            
-=======
             benchmark_data[block_name]["batch_loss"] = batch_loss
             benchmark_data[block_name]["epoch_loss"] = epoch_loss
 
->>>>>>> 9696feac1e506a11afefcf9ac412b4c6329fedb4:goes16_deep_learning_benchmark.py
         # Save benchmark data
         parent_p.send("exit")
         monitor_proc.join()

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from time import perf_counter
 import logging
+import csv
 
 
 class LossHistory(Callback):
@@ -264,8 +265,15 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
 <<<<<<< HEAD
         batch_loss = scn.loss_history.losses
         epoch_loss = scn.loss_history.val_losses
+        val_info = np.concatenate(val_labels, val_data)
+    #create vars for epoch_info, hour, and epoch information
+        epoch_info = scn.epochs
+        curr_time = currentDT = datetime.datetime.now()
+        all_data = np.concatenate(val_info,epoch_info,curr_time)
+    #print to csv
+    np.savetxt('epoch_validation_data.csv',all_data,delimiter=';', fmt='%d',header = 'Epoch Validation Data')        
     sess.close()
-    return epoch_times, batch_loss, epoch_loss, val_labels, val_data
+    return epoch_times, batch_loss, epoch_loss
 =======
         batch_loss = np.concatenate(scn.loss_history.losses).tolist()
         epoch_loss = np.concatenate(scn.loss_history.val_losses).tolist()
@@ -331,13 +339,20 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                 epoch_times = scn.time_history.times
                 batch_loss = scn.loss_history.losses
                 epoch_loss = scn.loss_history.val_losses
+                val_info = np.concatenate(val_labels, val_data)
+    #create vars for epoch_info, hour, and epoch information
+            epoch_info = scn.epochs
+            curr_time = currentDT = datetime.datetime.now()
+            all_data = np.concatenate(val_info,epoch_info,curr_time)
+            #print to csv
+            np.savetxt('epoch_validation_data.csv',all_data,delimiter=';', fmt='%d',header = 'Epoch Validation Data')    
     else:
 <<<<<<< HEAD
         print("Number of GPUs set to 0")
         epoch_times = []
         batch_loss = []
         epoch_loss = []
-    return epoch_times, batch_loss, epoch_loss, val_labels, val_data 
+    return epoch_times, batch_loss, epoch_loss 
 =======
         print("No GPUs available")
         epoch_times = [-1]
