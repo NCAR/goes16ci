@@ -8,11 +8,8 @@
 #SBATCH --gres=gpu:v100:8
 #SBATCH --exclusive
 #SBATCH --mem=256G
-module purge
-module load gnu/7.3.0 openmpi python/3.6.8 cuda/10.0 #changed to python 3.6 instead of 3.7 01/16 because tf2.0 is only compatable with python 3.6
-export PATH="/glade/u/home/gwallach/.conda/envs/goes16/bin:$PATH"
-module load ncarenv
-ncar_pylib
-python setup.py install
-python -u goes16_deep_learning_benchmark.py -c benchmark_config_test.yml >& goes_deep32.log
+module load ncarenv/1.3 gnu/7.4.0 ncarcompilers/0.5.0 python/3.7.5 cuda/10.0
+ncar_pylib  
+pip install -e .
+python -u goes16_deep_learning_benchmark.py -c benchmark_config_default_Gunther.yml >& goes_deep32.log
 #python -u goes16_deep_learning_benchmark_64.py >& goes_deep64.log

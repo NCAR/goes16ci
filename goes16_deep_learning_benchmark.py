@@ -1,34 +1,3 @@
-
-Skip to content
-
-    Why GitHub?
-                          
-
-
-                    
-Enterprise
-Explore
-                      
-
-                    
-Marketplace
-Pricing
-                       
-
-
-                        
-
-Sign in
-Sign up
-Code Issues 1 Pull requests 0 Projects 1 Actions Security Pulse
-Join GitHub today
-
-GitHub is home to over 40 million developers working together to host and review code, manage projects, and build software together.
-goes16ci/goes16_deep_learning_benchmark.py /
-djgagne@ou.edu Fixed remaining bugs and added nccl and cudnn version support e476db0 7 days ago
-@djgagne
-@guwa4340
-161 lines (152 sloc) 7.89 KB
 import sys
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
