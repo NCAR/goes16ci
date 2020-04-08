@@ -115,6 +115,29 @@ def get_cuda_version():
     return gpu_version_info
 
 
+def get_cudnn_version():
+    nvcc_path = which("nvcc")
+    if nvcc_path is None:
+        cudnn_version_info = "-1"
+    else:
+        cuda_top_path = "/".join(nvcc_path.split("/")[:-2])
+        proc = Popen(["find", cuda_top_path, "-name", "*cudnn.so.*"], stdout=PIPE)
+        stdout, stderr = proc.communicate()
+        cudnn_version_info = stdout.decode("utf-8").strip().split("\n")[-1].split("/")[-1].strip("libcudnn.so.")
+    return cudnn_version_info
+
+def get_nccl_version():
+    nvcc_path = which("nvcc")
+    if nvcc_path is None:
+        nccl_version_info = "-1"
+    else:
+        cuda_top_path = "/".join(nvcc_path.split("/")[:-2])
+        proc = Popen(["find", cuda_top_path, "-name", "*nccl.so.*"], stdout=PIPE)
+        stdout, stderr = proc.communicate()
+        nccl_version_info = stdout.decode("utf-8").strip().split("\n")[-1].split("/")[-1].strip("libnccl.so.")
+    return nccl_version_info
+    
+
 def get_gpu_names():
     """
     Get the names for each GPU on the system.

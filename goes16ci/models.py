@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 from time import perf_counter
 import logging
-import csv
 
 
 class LossHistory(Callback):
@@ -94,7 +93,6 @@ class StandardConvNet(object):
     def build_network(self, input_shape, output_size):
         """
         Create a keras model with the hyperparameters specified in the constructor.
-
         Args:
             input_shape (tuple of shape [variable, y, x]): The shape of the input data
             output_size: Number of neurons in output layer.
@@ -262,23 +260,16 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
         scn = ResNet(**conv_net_hyperparameters)
         scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
         epoch_times = scn.time_history.times
-<<<<<<< HEAD
-        batch_loss = scn.loss_history.losses
-        epoch_loss = scn.loss_history.val_losses
-        val_info = np.concatenate(val_labels, val_data)
+        batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
+        epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
+        val_info = np.concatenate((val_labels, val_data))
     #create vars for epoch_info, hour, and epoch information
         epoch_info = scn.epochs
         curr_time = currentDT = datetime.datetime.now()
-        all_data = np.concatenate(val_info,epoch_info,curr_time)
+        all_data = np.concatenate((val_info,epoch_info,curr_time))
     #print to csv
-    np.savetxt('epoch_validation_data.csv',all_data,delimiter=';', fmt='%d',header = 'Epoch Validation Data')        
-    sess.close()
+        np.savetxt('epoch_validation_data.csv',all_data,delimiter=';', fmt='%d',header = 'Epoch Validation Data')   
     return epoch_times, batch_loss, epoch_loss
-=======
-        batch_loss = np.concatenate(scn.loss_history.losses).tolist()
-        epoch_loss = np.concatenate(scn.loss_history.val_losses).tolist()
-    return epoch_times, batch_loss, epoch_loss
->>>>>>> 9696feac1e506a11afefcf9ac412b4c6329fedb4
 
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
@@ -286,7 +277,6 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                        dtype="float32", scale_batch_size=1):
     """
     Trains convolutional neural network on one or more GPUs.
-
     Args:
         train_data: array of training data inputs as a data cube
         train_labels: array of labels associated with each training example
@@ -315,11 +305,18 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                 scn = ResNet(**conv_net_hyperparameters)
                 scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
                 epoch_times = scn.time_history.times
-                batch_loss = np.concatenate(scn.loss_history.losses).tolist()
-                epoch_loss = np.concatenate(scn.loss_history.val_losses).tolist()
+                batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
+                epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
                 logging.info(scn.model.summary())
                 if scn is not None:
                     save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
+                val_info = np.concatenate((val_labels, val_data))
+    #create vars for epoch_info, hour, and epoch information
+            epoch_info = scn.epochs
+            curr_time = currentDT = datetime.datetime.now()
+            all_data = np.concatenate((val_info,epoch_info,curr_time))
+        #print to csv
+            np.savetxt('epoch_validation_data.csv',all_data,delimiter=';', fmt='%d',header = 'Epoch Validation Data')   
         elif num_gpus > 1: 
             gpu_devices = [gpu.name.replace("physical_", "") for gpu in gpus[:num_gpus]]
             print("GPU Devices", gpu_devices, num_gpus)
@@ -337,35 +334,26 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                     save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus), save_format="h5")
                 logging.info(scn.model.summary())
                 epoch_times = scn.time_history.times
-                batch_loss = scn.loss_history.losses
-                epoch_loss = scn.loss_history.val_losses
-                val_info = np.concatenate(val_labels, val_data)
+                batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
+                epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
+                val_info = np.concatenate((val_labels, val_data))
     #create vars for epoch_info, hour, and epoch information
-            epoch_info = scn.epochs
-            curr_time = currentDT = datetime.datetime.now()
-            all_data = np.concatenate(val_info,epoch_info,curr_time)
-            #print to csv
-            np.savetxt('epoch_validation_data.csv',all_data,delimiter=';', fmt='%d',header = 'Epoch Validation Data')    
+                epoch_info = scn.epochs
+                curr_time = currentDT = datetime.datetime.now()
+                all_data = np.concatenate((val_info,epoch_info,curr_time))
+    #print to csv
+                np.savetxt('epoch_validation_data.csv',all_data,delimiter=';', fmt='%d',header = 'Epoch Validation Data')   
     else:
-<<<<<<< HEAD
-        print("Number of GPUs set to 0")
-        epoch_times = []
-        batch_loss = []
-        epoch_loss = []
-    return epoch_times, batch_loss, epoch_loss 
-=======
         print("No GPUs available")
         epoch_times = [-1]
         batch_loss = [-1]
         epoch_loss = [-1]
     return epoch_times, batch_loss, epoch_loss 
->>>>>>> 9696feac1e506a11afefcf9ac412b4c6329fedb4
 
 
 class MinMaxScaler2D(object):
     """
     Rescale input arrays of shape (examples, y, x, variable) to range from out_min to out_max.
-
     """
     def __init__(self, out_min=0, out_max=1, scale_values=None):
         self.out_min = out_min
