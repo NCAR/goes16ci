@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from time import perf_counter
 import logging
+from datetime import datetime
 
 
 class LossHistory(Callback):
@@ -262,13 +263,14 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
         epoch_times = scn.time_history.times
         batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
         epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
-        val_info = np.concatenate((val_labels, val_data))
     #create vars for epoch_info, hour, and epoch information
         epoch_info = scn.epochs
-        curr_time = currentDT = datetime.datetime.now()
-        all_data = np.concatenate((val_info,epoch_info,curr_time))
+        curr_time = currentDT = datetime.now()
     #print to csv
-        np.savetxt('epoch_validation_data.csv',all_data,delimiter=';', fmt='%d',header = 'Epoch Validation Data')   
+        np.savetxt('epoch_validation_data.csv' + curr_time,curr_time,delimiter=';', fmt='%d',header = 'Current Data and Time')
+        np.savetxt('epoch_validation_data.csv'+curr_time,epoch_info,delimiter=';', fmt='%d',header = 'Epoch Information')
+        np.savetxt('epoch_validation_data.csv'+curr_time,val_labels,delimiter=';', fmt='%d',header = 'Validation Labels')
+        np.savetxt('epoch_validation_data.csv'+curr_time,val_data,delimiter=';', fmt='%d',header = 'Validation Data')
     return epoch_times, batch_loss, epoch_loss
 
 
@@ -310,13 +312,14 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                 logging.info(scn.model.summary())
                 if scn is not None:
                     save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
-                val_info = np.concatenate((val_labels, val_data))
     #create vars for epoch_info, hour, and epoch information
             epoch_info = scn.epochs
-            curr_time = currentDT = datetime.datetime.now()
-            all_data = np.concatenate((val_info,epoch_info,curr_time))
+            curr_time = currentDT = datetime.now()
         #print to csv
-            np.savetxt('epoch_validation_data.csv',all_data,delimiter=';', fmt='%d',header = 'Epoch Validation Data')   
+            np.savetxt('epoch_validation_data.csv' + curr_time,curr_time,delimiter=';', fmt='%d',header = 'Current Data and Time')
+            np.savetxt('epoch_validation_data.csv' + curr_time,epoch_info,delimiter=';', fmt='%d',header = 'Epoch Information')
+            np.savetxt('epoch_validation_data.csv' + curr_time,val_labels,delimiter=';', fmt='%d',header = 'Validation Labels')
+            np.savetxt('epoch_validation_data.csv' + cur_time,val_data,delimiter=';', fmt='%d',header = 'Validation Data')
         elif num_gpus > 1: 
             gpu_devices = [gpu.name.replace("physical_", "") for gpu in gpus[:num_gpus]]
             print("GPU Devices", gpu_devices, num_gpus)
@@ -336,13 +339,14 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                 epoch_times = scn.time_history.times
                 batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
                 epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
-                val_info = np.concatenate((val_labels, val_data))
     #create vars for epoch_info, hour, and epoch information
                 epoch_info = scn.epochs
-                curr_time = currentDT = datetime.datetime.now()
-                all_data = np.concatenate((val_info,epoch_info,curr_time))
+                curr_time = currentDT = datetime.now()
     #print to csv
-                np.savetxt('epoch_validation_data.csv',all_data,delimiter=';', fmt='%d',header = 'Epoch Validation Data')   
+                np.savetxt('epoch_validation_data.csv'+curr_time,curr_time,delimiter=';', fmt='%d',header = 'Current Data and Time')
+                np.savetxt('epoch_validation_data.csv'+curr_time,epoch_info,delimiter=';', fmt='%d',header = 'Epoch Information')
+                np.savetxt('epoch_validation_data.csv'+curr_time,val_labels,delimiter=';', fmt='%d',header = 'Validation Labels')
+                np.savetxt('epoch_validation_data.csv'+curr_time,val_data,delimiter=';', fmt='%d',header = 'Validation Data')
     else:
         print("No GPUs available")
         epoch_times = [-1]
