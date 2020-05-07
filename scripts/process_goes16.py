@@ -7,7 +7,7 @@ import yaml
 import traceback
 from os.path import exists
 from os import makedirs
-
+import numpy as np
 
 def main():
     parser = argparse.ArgumentParser()
