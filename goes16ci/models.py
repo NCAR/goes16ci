@@ -20,6 +20,7 @@ class LossHistory(Callback):
         self.losses.append(logs.get('loss'))
     
     def on_epoch_end(self, epoch, logs={}):
+        print(logs)
         self.val_losses.append(logs.get("val_loss"))
 
 class TimeHistory(Callback):
@@ -164,8 +165,9 @@ class StandardConvNet(object):
         else:
             val_data = (val_x, val_y)
 
-        self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
+        history = self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
                        validation_data=val_data, callbacks=[self.time_history, self.loss_history])
+        return history
 
     def predict(self, x, y):
         return self.model.predict(x, y, batch_size=self.batch_size)
@@ -259,7 +261,9 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
     K.set_floatx(dtype)
     with tf.device("/CPU:0"):
         scn = ResNet(**conv_net_hyperparameters)
-        scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+        history = scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+        history
+        print(history)
         epoch_times = scn.time_history.times
         batch_loss = scn.loss_history.losses
         epoch_loss = scn.loss_history.val_losses
