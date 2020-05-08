@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from time import perf_counter
 import logging
+import csv
 from datetime import datetime
 
 
@@ -22,7 +23,7 @@ class LossHistory(Callback):
     
     def on_epoch_end(self, epoch, logs={}):
         self.val_losses.append(logs.get("val_loss"))
-
+        
 class TimeHistory(Callback):
     def __init__(self):
         self.times = []
@@ -38,6 +39,19 @@ class TimeHistory(Callback):
     def on_epoch_end(self, epoch, logs=None):
         self.times.append(perf_counter() - self.epoch_time_start)
 
+"""        
+class ValidationPredictions(tf.keras.callbacks.Callback):
+	def on_train_begin(self, logs=None):
+		self.val_preds = {"labels": val_data[1]}
+	
+	def on_epoch_end(self, epoch, logs=None):
+		self.val_preds[epoch] = self.model.predict(val_data[0])
+
+	def on_train_end(self, logs=None):
+		val_pred_df = pd.DataFrame(self.val_preds)
+		time_str = pd.Timestamp.now().strftime("%d/%m/%Y %I:%M:%S")
+		val_pred_df.to_csv(f"validation_predictions_{time_str}.csv")
+"""
 
 class StandardConvNet(object):
     """
@@ -89,6 +103,7 @@ class StandardConvNet(object):
         self.parallel_model = None
         self.time_history = TimeHistory()
         self.loss_history = LossHistory()
+        #self.validation_predictions = ValidationPredictions()
         self.verbose = verbose
 
     def build_network(self, input_shape, output_size):
@@ -164,9 +179,11 @@ class StandardConvNet(object):
         else:
             val_data = (val_x, val_y)
 
-        self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
-                       validation_data=val_data, callbacks=[self.time_history, self.loss_history])
-
+        history = self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose, validation_data=val_data, callbacks=[self.time_history, self.loss_history])
+        #self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose, 
+                       #validation_data=val_data, callbacks=[self.time_history, self.loss_history])
+        return history
+        
     def predict(self, x, y):
         return self.model.predict(x, y, batch_size=self.batch_size)
 
@@ -259,18 +276,17 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
     K.set_floatx(dtype)
     with tf.device("/CPU:0"):
         scn = ResNet(**conv_net_hyperparameters)
-        scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+        history = scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+        #scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+        time_str = pd.Timestamp.now().strftime("%d/%m/%Y %I:%M:%S")
+        with open('AUC_history.csv','w') as f:
+            for key in history.history.keys():
+                f.write("%s,%s\n"%(key,history.history[key]))
         epoch_times = scn.time_history.times
         batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
         epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
-    #create vars for epoch_info, hour, and epoch information
-        epoch_info = scn.epochs
-        curr_time = currentDT = datetime.now()
-    #print to csv
-        np.savetxt('epoch_validation_data.csv' + curr_time,curr_time,delimiter=';', fmt='%d',header = 'Current Data and Time')
-        np.savetxt('epoch_validation_data.csv'+curr_time,epoch_info,delimiter=';', fmt='%d',header = 'Epoch Information')
-        np.savetxt('epoch_validation_data.csv'+curr_time,val_labels,delimiter=';', fmt='%d',header = 'Validation Labels')
-        np.savetxt('epoch_validation_data.csv'+curr_time,val_data,delimiter=';', fmt='%d',header = 'Validation Data')
+    date_time = str(datetime.now())
+    save_model(scn.model, 'goes16ci_model_cpu' + date_time + '.h5', save_format = 'h5')
     return epoch_times, batch_loss, epoch_loss
 
 
@@ -305,21 +321,18 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         if num_gpus == 1:
             with tf.device("/device:GPU:0"):
                 scn = ResNet(**conv_net_hyperparameters)
-                scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+                history = scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+                #scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+                time_str = pd.Timestamp.now().strftime("%d/%m/%Y %I:%M:%S")
+                with open('AUC_history.csv','w') as f:
+                    for key in history.history.keys():
+                        f.write("%s,%s\n"%(key,history.history[key]))
                 epoch_times = scn.time_history.times
                 batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
                 epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
                 logging.info(scn.model.summary())
                 if scn is not None:
                     save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
-    #create vars for epoch_info, hour, and epoch information
-            epoch_info = scn.epochs
-            curr_time = currentDT = datetime.now()
-        #print to csv
-            np.savetxt('epoch_validation_data.csv' + curr_time,curr_time,delimiter=';', fmt='%d',header = 'Current Data and Time')
-            np.savetxt('epoch_validation_data.csv' + curr_time,epoch_info,delimiter=';', fmt='%d',header = 'Epoch Information')
-            np.savetxt('epoch_validation_data.csv' + curr_time,val_labels,delimiter=';', fmt='%d',header = 'Validation Labels')
-            np.savetxt('epoch_validation_data.csv' + cur_time,val_data,delimiter=';', fmt='%d',header = 'Validation Data')
         elif num_gpus > 1: 
             gpu_devices = [gpu.name.replace("physical_", "") for gpu in gpus[:num_gpus]]
             print("GPU Devices", gpu_devices, num_gpus)
@@ -332,27 +345,24 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                 x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
                 scn.build_network(x_shape, y_size)
                 scn.compile_model()
-                scn.fit(train_data, train_labels)
+                history = scn.fit(train_data, train_labels)
+                #scn.fit(train_data, train_labels)
+                time_str = pd.Timestamp.now().strftime("%d/%m/%Y %I:%M:%S")
+                with open('AUC_history.csv','w') as f:
+                    for key in history.history.keys():
+                        f.write("%s,%s\n"%(key,history.history[key]))
                 if scn is not None:
                     save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus), save_format="h5")
                 logging.info(scn.model.summary())
                 epoch_times = scn.time_history.times
                 batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
                 epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
-    #create vars for epoch_info, hour, and epoch information
-                epoch_info = scn.epochs
-                curr_time = currentDT = datetime.now()
-    #print to csv
-                np.savetxt('epoch_validation_data.csv'+curr_time,curr_time,delimiter=';', fmt='%d',header = 'Current Data and Time')
-                np.savetxt('epoch_validation_data.csv'+curr_time,epoch_info,delimiter=';', fmt='%d',header = 'Epoch Information')
-                np.savetxt('epoch_validation_data.csv'+curr_time,val_labels,delimiter=';', fmt='%d',header = 'Validation Labels')
-                np.savetxt('epoch_validation_data.csv'+curr_time,val_data,delimiter=';', fmt='%d',header = 'Validation Data')
     else:
         print("No GPUs available")
         epoch_times = [-1]
         batch_loss = [-1]
         epoch_loss = [-1]
-    return epoch_times, batch_loss, epoch_loss 
+    return epoch_times, batch_loss, epoch_loss
 
 
 class MinMaxScaler2D(object):
