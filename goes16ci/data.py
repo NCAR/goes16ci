@@ -5,6 +5,8 @@ from os.path import join
 import pandas as pd
 from dask.distributed import LocalCluster, Client, wait
 import logging
+import s3fs as s3
+import os
 
 def load_single_data_file(filename, image_variable="abi", count_variable="flash_counts", time_variable="time"):
     ds = xr.open_dataset(filename)
@@ -93,6 +95,37 @@ def split_data(train_start, train_end, val_start, val_end, test_start, test_end,
     counts_subsets[“val”] = val_counts
     counts_subsets[“test”] = test_counts
     return data_subsets, counts_subsets
-    
-    
+
+def download_data(start_date,end_date,instrument,sector,out_path):   
+    fs = s3.S3FileSystem(anon=True)
+    ins_sec = instrument + '-' + sector
+    try:
+        os.stat(ins_sec)
+    except:
+        os.mkdir(ins_sec)
+    year = start_date.split('-')[0]
+    date = pd.to_datetime(start_date, format='%Y-%m-%d')
+    new_year_day = pd.Timestamp(year=date.year, month=1, day=1)
+    start_day = (date - new_year_day).days + 1
+    date = pd.to_datetime(end_date, format='%Y-%m-%d')
+    new_year_day = pd.Timestamp(year=date.year, month=1, day=1)
+    end_day = (date - new_year_day).days + 1
+    for day in range(start_day,end_day + 1):
+        day = str(day)
+        if len(day) == 1:
+            day = '00' + day
+        if len(day) == 2:
+            day = '0' + day
+        path = ins_sec + '/' + year + day
+        try:
+            os.stat(path)
+        except:
+            os.mkdir(path)
+        for hour in range(24):
+            hour = str(hour)
+            if len(hour) == 1:
+                hour = '0' + hour
+            files = fs.ls('s3://noaa-goes16/' + ins_sec + '/' + year + '/'+ day +'/'+ hour)
+            for file in files:
+                fs.get(file, out_path + '/' + path + '/' + file.split('/')[-1])
     
