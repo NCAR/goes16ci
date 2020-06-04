@@ -77,7 +77,7 @@ def load_data_parallel(data_path, num_processes,
     return all_images, all_counts, all_time
 
 def split_data(train_start, train_end, val_start, val_end, test_start, test_end, all_data, all_counts, all_time):
-    train_indices = np.where((all_time >= train_start) & (all_time <=train_end))[0])
+    train_indices = np.where((all_time >= train_start) & (all_time <=train_end))[0]
     val_indices  = np.where((all_time >= val_start) & (all_time <=val_end))[0] 
     test_indices = np.where((all_time >= test_start) & (all_time <=test_end))[0]
     train_data = all_data[train_indices].astype("float32")
@@ -88,12 +88,12 @@ def split_data(train_start, train_end, val_start, val_end, test_start, test_end,
     test_counts = np.where(all_counts[test_indices] > 0, 1, 0).astype('float32')
     data_subsets = {}
     counts_subsets = {}
-    data_subsets[“train”] = train_data
-    data_subsets[“val”] = val_data
-    data_subsets[“test”] = test_data
-    counts_subsets[“train”] = train_counts
-    counts_subsets[“val”] = val_counts
-    counts_subsets[“test”] = test_counts
+    data_subsets['train'] = train_data
+    data_subsets['val'] = val_data
+    data_subsets['test'] = test_data
+    counts_subsets['train'] = train_counts
+    counts_subsets['val'] = val_counts
+    counts_subsets['test'] = test_counts
     return data_subsets, counts_subsets
 
 def download_data(start_date,end_date,instrument,sector,out_path):   
