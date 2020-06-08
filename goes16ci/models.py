@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 from time import perf_counter
 import logging
+import csv
+from datetime import datetime
 
 
 class LossHistory(Callback):
@@ -22,7 +24,7 @@ class LossHistory(Callback):
     def on_epoch_end(self, epoch, logs={}):
         print(logs)
         self.val_losses.append(logs.get("val_loss"))
-
+        
 class TimeHistory(Callback):
     def __init__(self):
         self.times = []
@@ -38,6 +40,19 @@ class TimeHistory(Callback):
     def on_epoch_end(self, epoch, logs=None):
         self.times.append(perf_counter() - self.epoch_time_start)
 
+"""        
+class ValidationPredictions(tf.keras.callbacks.Callback):
+	def on_train_begin(self, logs=None):
+		self.val_preds = {"labels": val_data[1]}
+	
+	def on_epoch_end(self, epoch, logs=None):
+		self.val_preds[epoch] = self.model.predict(val_data[0])
+
+	def on_train_end(self, logs=None):
+		val_pred_df = pd.DataFrame(self.val_preds)
+		time_str = pd.Timestamp.now().strftime("%d/%m/%Y %I:%M:%S")
+		val_pred_df.to_csv(f"validation_predictions_{time_str}.csv")
+"""
 
 class StandardConvNet(object):
     """
@@ -89,12 +104,12 @@ class StandardConvNet(object):
         self.parallel_model = None
         self.time_history = TimeHistory()
         self.loss_history = LossHistory()
+        #self.validation_predictions = ValidationPredictions()
         self.verbose = verbose
 
     def build_network(self, input_shape, output_size):
         """
         Create a keras model with the hyperparameters specified in the constructor.
-
         Args:
             input_shape (tuple of shape [variable, y, x]): The shape of the input data
             output_size: Number of neurons in output layer.
@@ -164,6 +179,7 @@ class StandardConvNet(object):
             val_data = None
         else:
             val_data = (val_x, val_y)
+
 
         history = self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
                        validation_data=val_data, callbacks=[self.time_history, self.loss_history])
@@ -262,11 +278,16 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
     with tf.device("/CPU:0"):
         scn = ResNet(**conv_net_hyperparameters)
         history = scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
-        history
-        print(history)
+        #scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+        time_str = pd.Timestamp.now().strftime("%d/%m/%Y %I:%M:%S")
+        with open('AUC_history.csv','w') as f:
+            for key in history.history.keys():
+                f.write("%s,%s\n"%(key,history.history[key]))
         epoch_times = scn.time_history.times
         batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
         epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
+    date_time = str(datetime.now())
+    save_model(scn.model, 'goes16ci_model_cpu' + date_time + '.h5', save_format = 'h5')
     return epoch_times, batch_loss, epoch_loss
 
 
@@ -275,7 +296,6 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                        dtype="float32", scale_batch_size=1):
     """
     Trains convolutional neural network on one or more GPUs.
-
     Args:
         train_data: array of training data inputs as a data cube
         train_labels: array of labels associated with each training example
@@ -302,7 +322,12 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         if num_gpus == 1:
             with tf.device("/device:GPU:0"):
                 scn = ResNet(**conv_net_hyperparameters)
-                scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+                history = scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+                #scn.fit(train_data, train_labels, val_x=val_data, val_y=val_labels)
+                time_str = pd.Timestamp.now().strftime("%d/%m/%Y %I:%M:%S")
+                with open('AUC_history.csv','w') as f:
+                    for key in history.history.keys():
+                        f.write("%s,%s\n"%(key,history.history[key]))
                 epoch_times = scn.time_history.times
                 batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
                 epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
@@ -321,7 +346,12 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                 x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
                 scn.build_network(x_shape, y_size)
                 scn.compile_model()
-                scn.fit(train_data, train_labels)
+                history = scn.fit(train_data, train_labels)
+                #scn.fit(train_data, train_labels)
+                time_str = pd.Timestamp.now().strftime("%d/%m/%Y %I:%M:%S")
+                with open('AUC_history.csv','w') as f:
+                    for key in history.history.keys():
+                        f.write("%s,%s\n"%(key,history.history[key]))
                 if scn is not None:
                     save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus), save_format="h5")
                 logging.info(scn.model.summary())
@@ -333,13 +363,12 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
         epoch_times = [-1]
         batch_loss = [-1]
         epoch_loss = [-1]
-    return epoch_times, batch_loss, epoch_loss 
+    return epoch_times, batch_loss, epoch_loss
 
 
 class MinMaxScaler2D(object):
     """
     Rescale input arrays of shape (examples, y, x, variable) to range from out_min to out_max.
-
     """
     def __init__(self, out_min=0, out_max=1, scale_values=None):
         self.out_min = out_min

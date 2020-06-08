@@ -40,7 +40,7 @@ def main():
     has_gpus = True
     if len(benchmark_data["system"]["gpus"]) == 0:
         has_gpus = False
-    benchmark_data["system"].update(**get_cuda_version())
+    #benchmark_data["system"].update(**get_cuda_version())
     benchmark_data["system"]["cudnn_version"] = get_cudnn_version()
     benchmark_data["system"]["nccl_version"] = get_nccl_version()
     benchmark_data["system"]["gpu_topology"] = get_gpu_topo()
@@ -108,6 +108,7 @@ def main():
                 end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
                 benchmark_data[block_name]["batch_loss"] = batch_loss
                 benchmark_data[block_name]["epoch_loss"] = epoch_loss
+                
         # Single GPU Training
         if config["single_gpu"] and has_gpus:
             logging.info("Single GPU Training")
@@ -119,7 +120,7 @@ def main():
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
             benchmark_data[block_name]["batch_loss"] = batch_loss
             benchmark_data[block_name]["epoch_loss"] = epoch_loss
-
+    
         # Save benchmark data
         parent_p.send("exit")
         monitor_proc.join()
