@@ -15,7 +15,7 @@ conv_net_parameters:
   learning_rate: 0.01
   batch_size: 256
   loss: "binary_crossentropy"
-  metrics: ["mean_squared_error"]
+  metrics: ["mean_squared_error", "AUC"]
 cpu: 1
 num_cpus: 1
 single_gpu: 1
