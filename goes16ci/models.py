@@ -185,8 +185,8 @@ class StandardConvNet(object):
                        validation_data=val_data, callbacks=[self.time_history, self.loss_history])
         return history
 
-    def predict(self, x, y):
-        return self.model.predict(x, y, batch_size=self.batch_size)
+    def predict(self, x):
+        return self.model.predict(x, batch_size=self.batch_size)
 
 
 class ResNet(StandardConvNet):
