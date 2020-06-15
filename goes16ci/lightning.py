@@ -6,7 +6,11 @@ from glob import glob
 from os.path import join, exists
 from os import makedirs
 from datetime import datetime
+import time
+from dask import compute
+import dask.array as da
 
+PARALLEL=True
 
 def load_glm_data(path, start_date, end_date, freq="20S",
                   columns=("flash_lon", "flash_lat", "flash_energy")):
@@ -36,7 +40,7 @@ def load_glm_data(path, start_date, end_date, freq="20S",
             file_start_date = pd.Timestamp(datetime.strptime(glm_date_file[:-3].split("/")[-1].split("_")[4][1:-1],
                                                              "%Y%j%H%M%S"))
             if all_times[0] <= file_start_date <= all_times[-1]:
-                glm_ds = xr.open_dataset(glm_date_file)
+                glm_ds = xr.open_dataset(glm_date_file,decode_coords=False)
                 if glm_ds[columns[0]].shape[0] > 0:
                     all_flashes.append(glm_ds[list(columns)].to_dataframe())
                 glm_ds.close()
@@ -97,14 +101,24 @@ class GLMGrid(object):
                                  (flash_y >= self.y_points.min() - self.dx_km / 2) &
                                  (flash_y <= self.y_points.max() + self.dx_km / 2))[0]
         if valid_flashes.size > 0:
-            x_grid_flat = self.x_grid.reshape((self.x_grid.size, 1))
-            y_grid_flat = self.y_grid.reshape((self.x_grid.size, 1))
-            flash_x_flat = flash_x[valid_flashes].reshape(1, valid_flashes.size)
-            flash_y_flat = flash_y[valid_flashes].reshape(1, valid_flashes.size)
-            x_dist = np.abs(x_grid_flat - flash_x_flat)
-            y_dist = np.abs(y_grid_flat - flash_y_flat)
-            flash_grid_counts = np.sum((x_dist <= self.dx_km / 2) & (y_dist <= self.dx_km / 2), axis=1)
-            flash_grid = flash_grid_counts.reshape(self.lon_grid.shape).astype(np.int32)
+            if PARALLEL:
+                x_grid_flat = da.from_array(self.x_grid.reshape((self.x_grid.size, 1)),chunks=512)
+                y_grid_flat = da.from_array(self.y_grid.reshape((self.x_grid.size, 1)),chunks=512)
+                flash_x_flat = da.from_array(flash_x[valid_flashes].reshape(1, valid_flashes.size),chunks=512)
+                flash_y_flat = da.from_array(flash_y[valid_flashes].reshape(1, valid_flashes.size),chunks=512)
+                x_dist = da.fabs(x_grid_flat - flash_x_flat)
+                y_dist = da.fabs(y_grid_flat - flash_y_flat)
+                flash_grid_counts = da.sum((x_dist <= self.dx_km / 2) & (y_dist <= self.dx_km / 2), axis=1)
+                flash_grid = flash_grid_counts.reshape(self.lon_grid.shape).astype(np.int32).compute()
+            else:
+                x_grid_flat = self.x_grid.reshape((self.x_grid.size, 1))
+                y_grid_flat = self.y_grid.reshape((self.x_grid.size, 1))
+                flash_x_flat = flash_x[valid_flashes].reshape(1, valid_flashes.size)
+                flash_y_flat = flash_y[valid_flashes].reshape(1, valid_flashes.size)
+                x_dist = np.abs(x_grid_flat - flash_x_flat)
+                y_dist = np.abs(y_grid_flat - flash_y_flat)
+                flash_grid_counts = np.sum((x_dist <= self.dx_km / 2) & (y_dist <= self.dx_km / 2), axis=1)
+                flash_grid = flash_grid_counts.reshape(self.lon_grid.shape).astype(np.int32)
         else:
             flash_grid = np.zeros(self.lon_grid.shape, dtype=np.int32)
         return flash_grid
@@ -143,9 +157,13 @@ def create_glm_grids(glm_path, out_path, start_date, end_date, out_freq,
     for o in range(1, out_dates.shape[0]):
         period_start = out_dates[o - 1]
         period_end = out_dates[o]
+        start_t = time.time()
         period_flashes = load_glm_data(glm_path, period_start, period_end)
+        print("load_glm_data runtime: %d" % (time.time()-start_t))
         if period_flashes is not None:
+            start_t = time.time()
             flash_count_grid[o - 1] = grid.grid_glm_data(period_flashes)
+            print("grid_glm_data runtime: %d" % (time.time()-start_t))
         print(out_dates[o], flash_count_grid[o - 1].values.max(), flash_count_grid[o - 1].values.sum(), flush=True)
         del period_flashes
     flash_count_grid.attrs.update(grid_proj_params)
