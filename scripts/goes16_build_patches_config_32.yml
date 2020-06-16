@@ -1,0 +1,18 @@
+glm:
+  glm_path: "/glade/scratch/gwallach/goes16_nc/GLM-L2_LCFA/" # Path to GLM netCDF files
+  grid_path: "/glade/p/ral/wsap/petzke/lightning/glm/grid/"  # Path to output gridded GLM netCDF files
+  file_freq: "1D" # How often to write separate netCDF files
+  grid_freq: "20Min" # Aggregation period for each gridded time step
+  dx_km: 16.0 # Horizontal grid spacing in km
+abi:
+  abi_path: "/glade/scratch/gwallach/goes16_nc/ABI-L1b_conus/"
+  patch_path: "/glade/p/ral/wsap/petzke/lightning/abi/patches"
+  glm_grid_path: "/glade/p/ral/wsap/petzke/lightning/glm/grid/"
+  bands: [8, 9, 10, 14]
+  file_freq: "1D"
+  lead_time: "20Min"
+  patch_x_length_pixels: 32
+  patch_y_length_pixels: 32
+  samples_per_time: 50
+  time_range_minutes: 4
+  bt: 1
