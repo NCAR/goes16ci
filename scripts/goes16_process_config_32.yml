@@ -18,8 +18,8 @@ abi:
   abi_path: "/glade/scratch/gwallach/goes16_nc/ABI-L1b_conus/"
   patch_path: "/glade/scratch/gwallach/goes16_nc/ABI_patches_20190315_32/"
   glm_grid_path: "/glade/scratch/gwallach/goes16_nc/GLM_grids_32/"
-  start_date: "2019-03-01"
-  end_date: "2019-05-01"
+  start_date: "2019-04-04"
+  end_date: "2019-04-05"
   bands: [8, 9, 10, 14]
   file_freq: "1D"
   lead_time: "20Min"

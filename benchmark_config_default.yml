@@ -19,4 +19,4 @@ num_gpus: 8 # max number of GPUs to evaluate in multi-GPU training, will test up
 scale_batch_size: 1 # if 1 multiply the batch size by the number of GPUs, if 0 keep batch size the same
 dtype: "float32" # data type for neural network
 random_seed: 4832 # random seed integer
-out_path: "./benchmark_output_default" # directory to output yml and csv files
+out_path: "./benchmark_output_20" # directory to output yml and csv files
