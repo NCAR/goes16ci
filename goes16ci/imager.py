@@ -6,7 +6,9 @@ from pyproj import Proj, transform
 from os.path import join, exists
 from os import makedirs
 from scipy.interpolate import RectBivariateSpline
+from sklearn.metrics import pairwise_distances_argmin
 import xarray as xr
+import time as cpytime
 
 
 class GOES16ABI(object):
@@ -147,6 +149,7 @@ class GOES16ABI(object):
         row_slice = slice(int(center_row - y_size_pixels // 2), int(center_row + y_size_pixels // 2))
         col_slice = slice(int(center_col - x_size_pixels // 2), int(center_col + x_size_pixels // 2))
         patch = np.zeros((1, self.bands.size, y_size_pixels, x_size_pixels), dtype=np.float32)
+        
         for b, band in enumerate(self.bands):
             if bt:
                 patch[0, b, :, :] = (self.goes16_ds[band]["planck_fk2"].values /
@@ -158,6 +161,64 @@ class GOES16ABI(object):
         lons = self.lon[row_slice, col_slice]
         lats = self.lat[row_slice, col_slice]
         return patch, lons, lats
+
+    def calc_nearest_rows_cols(self,lons,lats):
+        wgs84 = Proj(init='epsg:4326')
+        center_xs, center_ys = transform(wgs84,self.proj,lons,lats)
+        center_xs, center_ys = center_xs.reshape(-1,1),center_ys.reshape(-1,1)
+        center_rows = pairwise_distances_argmin(self.y.reshape(-1,1),center_ys,axis=0,metric='l1')
+        center_cols = pairwise_distances_argmin(self.x.reshape(-1,1),center_xs,axis=0,metric='l1')
+        return center_rows,center_cols
+
+
+    def extract_all_image_patchs(self, center_lons, center_lats, x_size_pixels, y_size_pixels, bt=True):
+        center_rows,center_cols = self.calc_nearest_rows_cols(center_lons.ravel(),center_lats.ravel())
+        assert center_lons.size == center_lats.size == center_rows.size == center_cols.size
+        patches = np.ones((center_lons.size, self.bands.size, y_size_pixels, x_size_pixels), dtype=np.float32)*np.nan
+        lons = np.ones((center_lons.size,x_size_pixels,y_size_pixels),dtype=np.float32)*np.nan
+        lats = np.ones((center_lons.size,x_size_pixels,y_size_pixels),dtype=np.float32)*np.nan
+        half_x_size_pixels = x_size_pixels // 2
+        half_y_size_pixels = y_size_pixels // 2
+        
+        planck_fk2 = {}
+        planck_fk1 = {}
+        rad = {}
+        planck_bc1 = {}
+        planck_bc2 = {}
+        for band in self.bands:
+            planck_fk2[band] = self.goes16_ds[band]["planck_fk2"].values
+            planck_fk1[band] = self.goes16_ds[band]["planck_fk1"].values
+            rad[band] = self.goes16_ds[band]["Rad"].values
+            planck_bc1[band] = self.goes16_ds[band]["planck_bc1"].values
+            planck_bc2[band] = self.goes16_ds[band]["planck_bc2"].values
+
+        for i in range(center_lons.size):
+            center_row = center_rows[i]
+            center_col = center_cols[i]
+            if center_row < half_y_size_pixels or center_col < half_x_size_pixels \
+               or center_row+half_y_size_pixels >= self.y_g.shape[0] or center_col+half_x_size_pixels >= self.y_g.shape[1] :
+                continue
+            row_slice = slice(int(center_row - half_y_size_pixels), int(center_row + half_y_size_pixels))
+            col_slice = slice(int(center_col - half_x_size_pixels), int(center_col + half_x_size_pixels))
+            for b, band in enumerate(self.bands):
+                if bt:
+                    patches[i, b, :, :] = (planck_fk2[band] /
+                                             np.log(planck_fk1[band] /
+                                             rad[band][row_slice, col_slice] + 1) -
+                                             planck_bc1[band]) / planck_bc2[band]
+                else:
+                    patches[i, b, :, :] = rad[band][row_slice, col_slice]
+                lons[i,:,:] = self.lon[row_slice, col_slice]
+                lats[i,:,:] = self.lat[row_slice, col_slice]
+        
+        del planck_fk2
+        del planck_fk1
+        del rad
+        del planck_bc1
+        del planck_bc2
+
+        return patches,lons,lats
+
 
     def close(self):
         for band in self.bands:
@@ -245,6 +306,102 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
         except FileNotFoundError as fnfe:
             print(fnfe.args)
             is_valid[t*samples_per_time: t * samples_per_time + samples_per_time] = False 
+    x_coords = np.arange(patch_x_length_pixels)
+    y_coords = np.arange(patch_y_length_pixels)
+    valid_patches = np.where(is_valid)[0]
+    patch_num = np.arange(valid_patches.shape[0])
+    glm_ds.close()
+    del glm_ds
+    patch_ds = xr.Dataset(data_vars={"abi": (("patch", "band", "y", "x"), patches[valid_patches]),
+                                     "time": (("patch", ), pd.DatetimeIndex(patch_times)[valid_patches]),
+                                     "lon": (("patch", "y", "x"), patch_lons[valid_patches]),
+                                     "lat": (("patch", "y", "x"), patch_lats[valid_patches]),
+                                     "flash_counts": (("patch", ), flash_counts[valid_patches])},
+                          coords={"patch": patch_num,
+                                  "y": y_coords, "x": x_coords, "band": bands})
+    out_file = join(patch_path, "abi_patches_{0}.nc".format(glm_file_date.strftime(glm_date_format)))
+    if not exists(patch_path):
+        makedirs(patch_path)
+    patch_ds.to_netcdf(out_file,
+                       engine="netcdf4",
+                       encoding={"abi": {"zlib": True}, "lon": {"zlib": True}, "lat": {"zlib": True},
+                                 "flash_counts": {"zlib": True}})
+    return 0
+
+
+def extract_all_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, bands,
+                        lead_time, patch_x_length_pixels, patch_y_length_pixels, samples_per_time,
+                        glm_file_freq="1D", glm_date_format="%Y%m%dT%H%M%S",
+                        time_range_minutes=4, bt=False):
+    """
+    For a given set of gridded GLM counts, sample from the grids at each time step and extract ABI
+    patches centered on the lightning grid cell.
+
+    Args:
+        abi_path (str): path to GOES-16 ABI data
+        patch_path (str): Path to GOES-16 output patches
+        glm_grid_path (str): Path to GLM grid files
+        glm_file_date (:class:`pandas.Timestamp`): Day of GLM file being extracted
+        bands (:class:`numpy.ndarray`, int): timeArray of band numbers
+        lead_time (str): Lead time in pandas Timedelta units
+        patch_x_length_pixels (int): Size of patch in x direction in pixels
+        patch_y_length_pixels (int): Size of patch in y direction in pixels
+        samples_per_time (int): Number of grid points to select without replacement at each timestep
+        glm_file_freq (str): How ofter GLM files are use
+        glm_date_format (str): How the GLM date is formatted
+        time_range_minutes (int): Minutes before or after time in which GOES16 files are valid.
+        bt (bool): Calculate brightness temperature instead of radiance
+
+    Returns:
+
+    """
+    np.random.seed(100)
+    start_date_str = glm_file_date.strftime(glm_date_format)
+    end_date_str = (glm_file_date + pd.Timedelta(glm_file_freq)).strftime(glm_date_format)
+    glm_grid_file = join(glm_grid_path, "glm_grid_s{0}_e{1}.nc".format(start_date_str, end_date_str))
+    if not exists(glm_grid_file):
+        raise FileNotFoundError(glm_grid_file + " not found")
+    glm_ds = xr.open_dataset(glm_grid_file)
+    times = pd.DatetimeIndex(glm_ds["time"].values)
+    lons = glm_ds["lon"].values
+    lats = glm_ds["lat"].values
+    counts = glm_ds["lightning_counts"]
+    patches = np.zeros((times.size*lats.size, bands.size, patch_y_length_pixels, patch_x_length_pixels),
+                       dtype=np.float32)
+    patch_lons = np.zeros((times.size*lats.size, patch_y_length_pixels, patch_x_length_pixels),
+                          dtype=np.float32)
+    patch_lats = np.zeros((times.size*lats.size, patch_y_length_pixels, patch_x_length_pixels),
+                          dtype=np.float32)
+    flash_counts = np.zeros((times.size*lats.size), dtype=np.int32)
+    is_valid = np.ones((times.size * lats.size), dtype=bool)
+    patch_times = []
+    for t, time in enumerate(times):
+        print(time, flush=True)
+        patch_time = time - pd.Timedelta(lead_time)
+        count_grid = counts[t].values
+        patch_times.extend([time] * lats.size)
+        try:
+            goes16_abi_timestep = GOES16ABI(patch_time, bands, abi_path, time_range_minutes=time_range_minutes)
+            flash_counts[t*lats.size:t*lats.size+lats.size] = count_grid.ravel()
+
+            start_t = cpytime.time()
+            patches[t*lats.size:t*lats.size+lats.size], \
+                patch_lons[t*lats.size:t*lats.size+lats.size], \
+                patch_lats[t*lats.size:t*lats.size+lats.size] = goes16_abi_timestep.extract_all_image_patchs(lons,
+                                                                                lats,
+                                                                                patch_x_length_pixels,
+                                                                                patch_y_length_pixels,
+                                                                                bt=bt)
+            print("extract_all_image_patchs: %d" % (cpytime.time()-start_t))
+
+            if np.all(np.isnan(patches[t*lats.size:t*lats.size+lats.size])):
+                is_valid[t*lats.size: t * lats.size + lats.size] = False 
+
+            goes16_abi_timestep.close()
+            del goes16_abi_timestep
+        except FileNotFoundError as fnfe:
+            print(fnfe.args)
+            is_valid[t*lats.size: t * lats.size + lats.size] = False 
     x_coords = np.arange(patch_x_length_pixels)
     y_coords = np.arange(patch_y_length_pixels)
     valid_patches = np.where(is_valid)[0]
