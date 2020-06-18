@@ -2,7 +2,7 @@ from setuptools import setup
 
 if __name__ == "__main__":
     setup(name="goes16ci",
-          version="0.1.1",
+          version="0.1.2",
           description="Machine learning benchmark for lightning prediction with GOES16",
           author="David John Gagne",
           author_email="dgagne@ucar.edu",
