@@ -78,11 +78,16 @@ class GOES16ABI(object):
             str: full path to requested GOES-16 file
         """
         pd_date = pd.Timestamp(self.date)
+        #print("pd_date ",pd_date)
         channel_files = np.array(sorted(glob(join(self.path, pd_date.strftime("%Y%m%d"),
-                                         f"OR_ABI-L1b-RadC-M3C{channel:02d}_G16_*.nc"))))
+                                         f"OR_ABI-L1b-RadC-M*C{channel:02d}_G16_*.nc"))))
+        #print("channel_files",channel_files)
         channel_dates = self.abi_file_dates(channel_files)
+        #print("channel_dates",channel_dates)
         date_diffs = np.abs(channel_dates - pd_date)
+        #print("Date_diffs",date_diffs)
         file_index = np.where(date_diffs <= pd.Timedelta(minutes=self.time_range_minutes))[0]
+        #print("File_index",file_index)
         if len(file_index) == 0:
             raise FileNotFoundError('No GOES-16 files within {0:d} minutes of '.format(self.time_range_minutes) + pd_date.strftime("%Y-%m-%d %H:%M:%S" + ". Nearest file is within {0}".format(date_diffs.total_seconds().values.min() / 60)))
         else:
@@ -173,7 +178,7 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
         patch_path (str): Path to GOES-16 output patches
         glm_grid_path (str): Path to GLM grid files
         glm_file_date (:class:`pandas.Timestamp`): Day of GLM file being extracted
-        bands (:class:`numpy.ndarray`, int): Array of band numbers
+        bands (:class:`numpy.ndarray`, int): timeArray of band numbers
         lead_time (str): Lead time in pandas Timedelta units
         patch_x_length_pixels (int): Size of patch in x direction in pixels
         patch_y_length_pixels (int): Size of patch in y direction in pixels
