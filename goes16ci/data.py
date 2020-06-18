@@ -5,6 +5,8 @@ from os.path import join
 import pandas as pd
 from dask.distributed import LocalCluster, Client, wait
 import logging
+import s3fs as s3
+import os
 
 def load_single_data_file(filename, image_variable="abi", count_variable="flash_counts", time_variable="time"):
     ds = xr.open_dataset(filename)
@@ -22,6 +24,9 @@ def load_single_data_file(filename, image_variable="abi", count_variable="flash_
 def load_data_serial(data_path, image_variable="abi", count_variable="flash_counts", time_variable="time",
                      start_date=None, end_date=None):
     data_files = sorted(glob(join(data_path, "*.nc")))
+    if len(data_files) == 0:
+        logging.error("No data files available in the data directory. Please run\npython download_data.py\n on an internet-connected node to retrieve the data.")
+        raise FileNotFoundError("No data files found in the data directory.")
     images_list = []
     counts_list = []
     time_list = []
@@ -71,3 +76,59 @@ def load_data_parallel(data_path, num_processes,
     del cluster
     return all_images, all_counts, all_time
 
+def split_data(train_start, train_end, val_start, val_end, test_start, test_end, all_data, all_counts, all_time):
+    train_indices = np.where((all_time >= train_start) & (all_time <=train_end))[0]
+    val_indices  = np.where((all_time >= val_start) & (all_time <=val_end))[0] 
+    test_indices = np.where((all_time >= test_start) & (all_time <=test_end))[0]
+    train_data = all_data[train_indices].astype("float32")
+    val_data = all_data[val_indices].astype("float32")
+    test_data = all_data[test_indices].astype("float32")
+    train_counts = np.where(all_counts[train_indices] > 0, 1, 0).astype('float32')
+    val_counts = np.where(all_counts[val_indices] > 0, 1, 0).astype('float32')
+    test_counts = np.where(all_counts[test_indices] > 0, 1, 0).astype('float32')
+    data_subsets = {}
+    counts_subsets = {}
+    data_subsets['train'] = train_data
+    data_subsets['val'] = val_data
+    data_subsets['test'] = test_data
+    counts_subsets['train'] = train_counts
+    counts_subsets['val'] = val_counts
+    counts_subsets['test'] = test_counts
+    return data_subsets, counts_subsets
+
+def download_data(start_date,end_date,instrument,sector,outpath):   
+    fs = s3.S3FileSystem(anon=True)
+    ins_sec = instrument + '-' + sector
+    try:
+        os.stat(outpath + ins_sec)
+    except:
+        os.mkdir(outpath + ins_sec)
+    year = start_date.split('-')[0]
+    date = pd.to_datetime(start_date, format='%Y-%m-%d')
+    new_year_day = pd.Timestamp(year=date.year, month=1, day=1)
+    start_day = (date - new_year_day).days + 1
+    
+    date = pd.to_datetime(end_date, format='%Y-%m-%d')
+    new_year_day = pd.Timestamp(year=date.year, month=1, day=1)
+    end_day = (date - new_year_day).days + 1
+    
+    for day in range(start_day,end_day + 1):
+        day = str(day)
+        if len(day) == 1:
+            day = '00' + day
+        if len(day) == 2:
+            day = '0' + day
+        #print(day)
+        path = ins_sec + '/' + year + day
+        #print(path)
+        try:
+            os.stat(outpath + path)
+        except:
+            os.mkdir(outpath + path)
+        for hour in range(24):
+            hour = str(hour)
+            if len(hour) == 1:
+                hour = '0' + hour
+            files = fs.ls('s3://noaa-goes16/' + ins_sec + '/' + year + '/'+ day +'/'+ hour)
+            for file in files:
+                fs.get(file, outpath + '/' + path + '/' + file.split('/')[-1])

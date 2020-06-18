@@ -1,6 +1,5 @@
 log_level: 20
 data_path: "data/" #change to ABI directory
-parallel_processes: 1
 split_date: "2018-04-10"
 start_date: "2018-04-02"
 end_date: "2018-04-14"
@@ -16,11 +15,11 @@ conv_net_parameters:
   learning_rate: 0.01
   batch_size: 256
   loss: "binary_crossentropy"
-  metrics: ["mean_squared_error"]
+  metrics: ["mean_squared_error", "AUC"]
 cpu: 1
 num_cpus: 1
-single_gpu: 0
-multi_gpu: 0 #can set to zero
+single_gpu: 1
+multi_gpu: 1 #can set to zero
 num_gpus: 8
 scale_batch_size: 1
 dtype: "float32"

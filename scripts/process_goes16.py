@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from goes16ci.lightning import create_glm_grids
 from goes16ci.imager import extract_abi_patches
 from dask.distributed import LocalCluster, Client, as_completed, wait
@@ -7,7 +8,7 @@ import yaml
 import traceback
 from os.path import exists
 from os import makedirs
-
+import numpy as np
 
 def main():
     parser = argparse.ArgumentParser()

@@ -15,5 +15,6 @@ if __name__ == "__main__":
                             "tensorflow>=1.15.2",
                             "xarray",
                             "dask",
-                            "pyyaml"]
+                            "pyyaml",
+                            "s3fs"]
           )
