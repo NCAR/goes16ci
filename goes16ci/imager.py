@@ -329,10 +329,9 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
     return 0
 
 
-def extract_all_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, bands,
-                        lead_time, patch_x_length_pixels, patch_y_length_pixels, samples_per_time,
-                        glm_file_freq="1D", glm_date_format="%Y%m%dT%H%M%S",
-                        time_range_minutes=4, bt=False):
+def extract_all_abi_patches(abi_path, patch_path, glm_grid_path, start_date, end_date, bands,
+                        lead_time, patch_x_length_pixels, patch_y_length_pixels, glm_file_freq="1D", 
+                        glm_date_format="%Y%m%dT%H%M%S", time_range_minutes=4, bt=False):
     """
     For a given set of gridded GLM counts, sample from the grids at each time step and extract ABI
     patches centered on the lightning grid cell.
@@ -341,12 +340,12 @@ def extract_all_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, 
         abi_path (str): path to GOES-16 ABI data
         patch_path (str): Path to GOES-16 output patches
         glm_grid_path (str): Path to GLM grid files
-        glm_file_date (:class:`pandas.Timestamp`): Day of GLM file being extracted
+        start_date (:class:`pandas.Timestamp`): Start dt of GLM file being extracted
+        end_date (:class:`pandas.Timestamp`): End dt of GLM file being extracted
         bands (:class:`numpy.ndarray`, int): timeArray of band numbers
         lead_time (str): Lead time in pandas Timedelta units
         patch_x_length_pixels (int): Size of patch in x direction in pixels
         patch_y_length_pixels (int): Size of patch in y direction in pixels
-        samples_per_time (int): Number of grid points to select without replacement at each timestep
         glm_file_freq (str): How ofter GLM files are use
         glm_date_format (str): How the GLM date is formatted
         time_range_minutes (int): Minutes before or after time in which GOES16 files are valid.
@@ -356,8 +355,8 @@ def extract_all_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, 
 
     """
     np.random.seed(100)
-    start_date_str = glm_file_date.strftime(glm_date_format)
-    end_date_str = (glm_file_date + pd.Timedelta(glm_file_freq)).strftime(glm_date_format)
+    start_date_str = start_date.strftime(glm_date_format)
+    end_date_str = end_date.strftime(glm_date_format)
     glm_grid_file = join(glm_grid_path, "glm_grid_s{0}_e{1}.nc".format(start_date_str, end_date_str))
     if not exists(glm_grid_file):
         raise FileNotFoundError(glm_grid_file + " not found")
@@ -392,7 +391,7 @@ def extract_all_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, 
                                                                                 patch_x_length_pixels,
                                                                                 patch_y_length_pixels,
                                                                                 bt=bt)
-            print("extract_all_image_patchs: %d" % (cpytime.time()-start_t))
+            print("extract_all_image_patchs runtime: %d" % (cpytime.time()-start_t))
 
             if np.all(np.isnan(patches[t*lats.size:t*lats.size+lats.size])):
                 is_valid[t*lats.size: t * lats.size + lats.size] = False 
@@ -415,7 +414,7 @@ def extract_all_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, 
                                      "flash_counts": (("patch", ), flash_counts[valid_patches])},
                           coords={"patch": patch_num,
                                   "y": y_coords, "x": x_coords, "band": bands})
-    out_file = join(patch_path, "abi_patches_{0}.nc".format(glm_file_date.strftime(glm_date_format)))
+    out_file = join(patch_path, "abi_patches_{0}.nc".format(start_date.strftime(glm_date_format)))
     if not exists(patch_path):
         makedirs(patch_path)
     patch_ds.to_netcdf(out_file,
