@@ -13,8 +13,8 @@ export PATH="/glade/u/home/gwallach/.conda/envs/goes16/bin:$PATH"
 cd $HOME/goes16ci/
 pip install .
 cd scripts
-#python -u process_goes16.py goes16_process_config_32.yml -n 6 -l >& process.log
-#python -u process_goes16.py goes16_process_config_64.yml -n 6 -l >& process.log
-python -u process_goes16.py goes16_process_config_32.yml -n 8 -a >& process.log
-#python -u process_goes16.py goes16_process_config_64.yml -n 8 -a >& process.log
+python -u process_goes16.py goes16_process_config_32.yml -n 6 -l >& process.log
+python -u process_goes16.py goes16_process_config_64.yml -n 6 -l >& process.log
+python -u process_goes16.py goes16_process_config_32.yml -n 6 -a >& process.log
+python -u process_goes16.py goes16_process_config_64.yml -n 6 -a >& process.log
 #python -u process_goes16.py goes16_process_config_128.yml -n 36 -a >& process.log
