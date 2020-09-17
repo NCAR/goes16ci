@@ -103,7 +103,7 @@ def build_patches(min_lon, min_lat, max_lon, max_lat, begin_iso_dt, end_iso_dt, 
        glm_jobs = []
        for date in glm_file_dates:
            logging.info("Processing: %s", date)
-           glm_jobs.append(client.submit(create_glm_grids, glm_path, grid_path, date, min(end_date,date + pd.Timedelta(file_freq)), grid_freq, grid_proj_params, dx_km, x_extent_km, y_extent_km))
+           glm_jobs.append(client.submit(create_glm_grids, glm_path, grid_path, date, min(end_iso_dt,date + pd.Timedelta(file_freq)), grid_freq, grid_proj_params, dx_km, x_extent_km, y_extent_km))
        for glm_job in as_completed(glm_jobs):
            res = glm_job.result()
            if glm_job.status == "error":
