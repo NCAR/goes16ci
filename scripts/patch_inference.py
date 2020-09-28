@@ -39,6 +39,8 @@ def infer(modelfile,patchfile,glmtemplate,outfile,verbose=False):
 
     print("Performing inference",flush=True)
     y_hat = model.predict(abi_data)
+    if verbose:
+        print("y_hat.shape = %s, y_hat = %s" % (y_hat.shape,y_hat),flush=True)
 
     print("Reading output template netcdf")
     nc = netCDF4.Dataset(glmtemplate)
@@ -49,7 +51,7 @@ def infer(modelfile,patchfile,glmtemplate,outfile,verbose=False):
 
     y_hat = y_hat.reshape((time_dim_size,y_dim_size,x_dim_size))
     if verbose:
-        print("y_hat.shape = %s, y_hat = %s" % (y_hat.shape,y_hat),flush=True)
+        print("y_hat.shape (after reshape) = %s, y_hat = %s" % (y_hat.shape,y_hat),flush=True)
 
     print("Creating output file")
     ncout = netCDF4.Dataset(outfile, 'w', format='NETCDF4')
@@ -85,7 +87,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("modelfile",type=str,help="HDF5 model file")
     parser.add_argument("patchfile",type=str,help="Input nc patch file")
-    parser.add_argument("glmtemplate",type=str,help="Output GLM template. Should use the same dimensions used to create patch file.")
+    parser.add_argument("glmtemplate",type=str,help="Output GLM template. Should use the same dimensions used to create patch file (i.e. cover the same date range length and use same lead_time/grid_freq).")
     parser.add_argument("outfile",type=str,help="Output nc file")
     parser.add_argument("-v","--verbose",dest="verbose",help="Provide extra debugging information",action="store_true")
     args = parser.parse_args()
