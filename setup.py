@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 if __name__ == "__main__":
     setup(name="goes16ci",
-          version="0.1.3.b0",
+          version="0.1.4b0",
           description="Machine learning benchmark for lightning prediction with GOES16",
           author="David John Gagne",
           author_email="dgagne@ucar.edu",
