@@ -1,0 +1,22 @@
+name: goes
+channels:
+  - conda-forge
+dependencies:
+  - python=3.7
+  - numpy=1.18.*
+  - scipy
+  - matplotlib
+  - xarray
+  - netcdf4
+  - pyyaml
+  - pandas
+  - scikit-learn
+  - pytest
+  - pyproj
+  - jupyter
+  - dask
+  - distributed
+  - cartopy
+  - pip
+  - pip:
+    - tensorflow
