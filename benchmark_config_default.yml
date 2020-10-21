@@ -1,4 +1,4 @@
-og_level: 20
+log_level: 20
 data_path: "data/" # Path to data
 split_date: "2018-05-20" # Date for splitting training and testing examples
 conv_net_parameters:
