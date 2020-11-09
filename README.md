@@ -9,6 +9,7 @@ used for atmospheric science problems.
 * David John Gagne
 * Bill Anderson
 * Gunther Wallach
+* Bill Petzke
 
 ## Requirements
 The code is designed to run on Python 3.6 and 3.7. It requires the following
@@ -22,6 +23,8 @@ Python libraries:
 * pyproj
 * dask distributed (for data processing)
 * ipython 
+* cartopy
+* pyyaml
 * jupyter (for interactive visualization of neural networks)
 
 ## Setup from Scratch
@@ -29,40 +32,15 @@ Python libraries:
 * Install Python 3.7 on your machine. I recommend the Miniconda Python installer available
 [here](https://docs.conda.io/en/latest/miniconda.html).
 
-* Create a benchmark environment: `conda create -n goes16 python=3.7`
+* Create the benchmark environment: `conda env create -f environment.yml`
+This will automatically install all dependencies, including the latest version of tensorflow. 
 
 * Once the environment is installed activate it on your machine:
-`source activate goes16`
-
-* Install the needed Python libraries from conda
-
-```bash
-conda install -c conda-forge --yes \
-    pip \
-    ipython \
-    jupyter \
-    numpy \
-    scipy \
-    matplotlib \
-    xarray \
-    netcdf4 \
-    pandas \
-    pyyaml \
-    dask \
-    distributed \
-    scikit-learn \
-    pyproj
-```
+`source activate goes`
 
 * Make sure the CUDA kernel and CUDA toolkit are installed on your system and know the path
 and versions. 
 
-* Install the tensorflow-gpu binary (if installing tensorflow 1.15) or tensorflow binary (if tensorflow 2). For more detailed installation instructions 
-visit the [tensorflow website](https://www.tensorflow.org/install/gpu).
-```bash
-# If you plan to use tensorflow 2
-pip install tensorflow
-```
 ## Run Benchmark Script
 
 * Clone the goes16ci git repository to your home directory.
