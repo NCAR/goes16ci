@@ -9,4 +9,4 @@
 module load cuda/10.1
 export PATH="/glade/u/home/dgagne/miniconda3/envs/goes/bin/:$PATH"
 pip install -e 
-python patch_inference.py -v "/glade/u/home/gwallach/goes16ci/goes16ci_model_cpu2020-09-16 21:38:55.333504.h5" /glade/scratch/bpetzke/abi_patches_20190601T180000.nc /glade/scratch/bpetzke/glm_grid_s20190601T180000_e20190601T230000.nc lightning_20190601T18000_out.nc >& patches.log
+python patch_inference.py -v "/glade/u/home/gwallach/goes16ci/goes16ci_model_cpu2020-09-16 21:38:55.333504.h5" /glade/scratch/gwallach/goes16_nc/ABI_patches_32/abi_patches_20190901T000000.nc /glade/scratch/gwallach/goes16_nc/glm_grid_s20190901T180000_e20190901T230000.nc lightning_20190901T18000_out.nc >& patches.log
