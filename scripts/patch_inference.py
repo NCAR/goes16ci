@@ -42,20 +42,7 @@ def infer(modelfile,patchfile,glmtemplate,outfile,verbose=False):
     abi_data_scaled = 1.0 - scaler.transform(abi_data)
     print("Scaled = ",abi_data_scaled.shape)
     
-    """
-    scaling values need to be saved out during training, then the patch builder and patch inference
-    functions need to load the scaling values and apply them to the patches in order for the neural network
-    to produce reasonable predictions. 
-    After values are MinMaxScaled, then the scaled values need to be subracted from 1
-    
-    Code used to do this in the benchmark script:
-    # Rescale training and validation data
-    scaler = MinMaxScaler2D()
-    train_data_scaled = 1.0 - scaler.fit_transform(train_data)
-    val_data_scaled = 1.0 - scaler.transform(val_data)
-    print(scaler.scale_values)
-    
-    """
+
     if verbose:
         print("abi_data.shape = %s, abi_data = %s" % (abi_data.shape,abi_data[[0,-1]]),flush=True)
 
