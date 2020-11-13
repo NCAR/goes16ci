@@ -10,10 +10,8 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=dgagne
 module purge
-export HOME="/glade/u/home/gwallach"
-module load gnu/7.3.0 openmpi-x/3.1.0 python/3.6.4 cuda netcdf
-source /glade/work/dgagne/ncar_pylib_dl/bin/activate
-cd $HOME/goes16ci
-python setup.py install
-cd $HOME/goes16ci/scripts
+export PATH="/glade/u/home/gwallach/.conda/envs/goes16/bin:$PATH"
+cd $HOME/goes16ci/
+pip install .
+cd scripts
 python -u process_goes16.py goes16_process_config.yml -n 36 -a 
