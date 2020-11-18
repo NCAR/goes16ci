@@ -14,4 +14,4 @@
 module load cuda/10.1
 export PATH="/glade/u/home/dgagne/miniconda3/envs/goes/bin/:$PATH"
 pip install -e .
-python -u goes16_benchmark.py -c benchmark_config_default-Gunther.yml >& goes_deep_default.log
+python -u goes16_deep_learning_benchmark.py -c benchmark_config_default.yml >& goes_deep_default.log
