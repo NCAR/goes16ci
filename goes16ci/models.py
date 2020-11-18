@@ -3,6 +3,7 @@ from tensorflow.keras.layers import Dense, Conv2D, Activation, Input, Flatten, A
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.models import Model, save_model
 from tensorflow.keras.optimizers import Adam, SGD
+#from aimlutils.hyper_opt.utils import KerasPruningCallback
 import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import Callback
 import numpy as np
@@ -81,7 +82,7 @@ class StandardConvNet(object):
                  hidden_activation="relu", output_activation="sigmoid",
                  pooling="mean", use_dropout=False, dropout_alpha=0.0,
                  data_format="channels_last", optimizer="adam", loss="mse", leaky_alpha=0.1, metrics=None, 
-                 learning_rate=0.001, batch_size=1024, epochs=10, verbose=0, sgd_momentum=0.99):
+                 learning_rate=0.001, batch_size=1024, epochs=10, verbose=0, sgd_momentum=0.99,trail=None):
         self.min_filters = min_filters
         self.filter_width = filter_width
         self.filter_growth_rate = filter_growth_rate
@@ -104,6 +105,7 @@ class StandardConvNet(object):
         self.parallel_model = None
         self.time_history = TimeHistory()
         self.loss_history = LossHistory()
+        #self.pruning_callback = KerasPruningCallback(trial,'val_loss', interval = 1)
         #self.validation_predictions = ValidationPredictions()
         self.verbose = verbose
 
@@ -182,7 +184,7 @@ class StandardConvNet(object):
 
 
         history = self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
-                       validation_data=val_data, callbacks=[self.time_history, self.loss_history])
+                       validation_data=val_data, callbacks=[self.time_history, self.loss_history]) #self.pruning_callback])
         return history
 
     def predict(self, x):

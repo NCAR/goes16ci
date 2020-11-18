@@ -38,7 +38,7 @@ def infer(modelfile,patchfile,glmtemplate,outfile,verbose=False):
     print("Not Scaled = ",abi_data.shape)
     #rescale ABI data to pass into Model
     scaler = MinMaxScaler2D()
-    scaler.scale_values = pd.read_csv("../scaler_values.csv")
+    scaler.scale_values = pd.read_csv("../scale_values.csv")
     abi_data_scaled = 1.0 - scaler.transform(abi_data)
     print("Scaled = ",abi_data_scaled.shape)
     
