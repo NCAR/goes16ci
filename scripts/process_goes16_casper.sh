@@ -10,8 +10,5 @@
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=dgagne
 module purge
-export PATH="/glade/u/home/gwallach/.conda/envs/goes16/bin:$PATH"
-cd $HOME/goes16ci/
-pip install .
-cd scripts
+source activate goes
 python -u process_goes16.py goes16_process_config.yml -n 36 -a 

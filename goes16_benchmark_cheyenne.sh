@@ -8,7 +8,5 @@
 #PBS -m abe
 #PBS -M dgagne@ucar.edu
 module purge
-export PATH=/glade/u/home/gwallach/miniconda3/envs/ml/bin:$PATH
-cd ~/goes16ci
-python setup.py install
+source activate goes
 python -u goes16_deep_learning_benchmark.py >& goes_deep_chey.log

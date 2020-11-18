@@ -6,7 +6,7 @@ glm:
   dx_km: 16.0 # Horizontal grid spacing in km
 abi:
   abi_path: "/glade/scratch/gwallach/goes16_nc/ABI-L1b_conus/"
-  patch_path: "/glade/p/ral/wsap/petzke/lightning/abi/patches"
+  patch_path: "/glade/scratch/gwallach/goes16_nc/"
   glm_grid_path: "/glade/scratch/gwallach/goes16_nc/"
   bands: [8, 9, 10, 14]
   file_freq: "1D"
