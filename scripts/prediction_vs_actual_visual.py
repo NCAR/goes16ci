@@ -39,13 +39,13 @@ states = cfeature.STATES.with_scale('10m')
 ax.add_feature(states, edgecolor='black')
 pred_bounds = np.array([0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1])
 norm = colors.BoundaryNorm(boundaries=pred_bounds,ncolors=200,clip=True)
-Pred = ax.pcolormesh(lons,lats,light_prob[0,:,:],transform=ccrs.Miller(),norm=norm,cmap='Reds')
+Pred = ax.pcolormesh(lons,lats,light_prob[0,:,:],transform=ccrs.Miller(),norm=norm,cmap='Reds',vmin=0.1,vmax=1)
 Actual = ax.pcolormesh(lons,lats,actual_light[0,:,:],transform=ccrs.Miller(),cmap='Blues')
 plt.colorbar(Actual,ax=ax,label='Actual Lightning Strikes')
 plt.colorbar(Pred,ax=ax,label='Probability of Lightning Strikes')
 
 def animation_frame(i):
-    Pred = ax.pcolormesh(lons,lats,light_prob[i,:,:],transform=ccrs.Miller(),norm=norm,cmap='Reds',vmin=0.1,vmax=1,)
+    Pred = ax.pcolormesh(lons,lats,light_prob[i,:,:],transform=ccrs.Miller(),norm=norm,cmap='Reds',vmin=0.1,vmax=1)
     Actual = ax.pcolormesh(lons,lats,actual_light[i,:,:],transform=ccrs.Miller(),cmap='Blues')
     #change the title to display the timestep for every time
     time = str(actual_light[i,:,:].time.coords)
@@ -54,7 +54,7 @@ def animation_frame(i):
     return Actual, Pred
 
 def init():
-    Pred = ax.pcolormesh(lons,lats,light_prob[0,:,:],transform=ccrs.Miller(),norm=norm,cmap='Reds')
+    Pred = ax.pcolormesh(lons,lats,light_prob[0,:,:],transform=ccrs.Miller(),norm=norm,cmap='Reds',vmin=0.1,vmax=1)
     Actual = ax.pcolormesh(lons,lats,actual_light[0,:,:],transform=ccrs.Miller(),cmap='Blues')
     return Actual, Pred
 
