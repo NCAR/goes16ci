@@ -81,7 +81,7 @@ class GOES16ABI(object):
         """
         pd_date = pd.Timestamp(self.date)
         #print("pd_date ",pd_date)
-        channel_files = np.array(sorted(glob(join(self.path, pd_date.strftime("%Y%m%d"),
+        channel_files = np.array(sorted(glob(join(self.path, pd_date.strftime("%Y%j"),
                                          f"OR_ABI-L1b-RadC-M*C{channel:02d}_G16_*.nc"))))
         #print("channel_files",channel_files)
         channel_dates = self.abi_file_dates(channel_files)
@@ -244,7 +244,7 @@ def extract_abi_patches(abi_path, patch_path, glm_grid_path, glm_file_date, band
         patch_x_length_pixels (int): Size of patch in x direction in pixels
         patch_y_length_pixels (int): Size of patch in y direction in pixels
         samples_per_time (int): Number of grid points to select without replacement at each timestep
-        glm_file_freq (str): How ofter GLM files are use
+        glm_file_freq (str): How often GLM files are use
         glm_date_format (str): How the GLM date is formatted
         time_range_minutes (int): Minutes before or after time in which GOES16 files are valid.
         bt (bool): Calculate brightness temperature instead of radiance

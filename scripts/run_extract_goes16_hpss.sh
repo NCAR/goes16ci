@@ -8,8 +8,6 @@
 #SBATCH -e goes16_hpss.log
 #SBATCH -o goes16_hpss.log
 source activate goes
-pip install -e .
-cd ~/goes16ci/scripts
-python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16_nc/ -d 2019-03-01 -e 2019-05-01 -n 5 >& extract.log
-python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16_nc/ -i ABI-L1b -s conus -d 2019-03-01 -e 2019-05-01 -n 5 >& extract.log
-python -u untar_goes16.py >& extract.log
+python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16_nc/ -d 2019-03-01 -e 2019-10-01 -n 5 >& extract.log
+python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16_nc/ -i ABI-L1b -s conus -d 2019-03-01 -e 2019-10-01 -n 5 >& extract.log
+#python -u untar_goes16.py >& extract.log

@@ -4,7 +4,7 @@ from os.path import join, exists
 import subprocess
 
 def main():
-    tar_path = "/glade/scratch/gwallach/goes16/"
+    tar_path = "/glade/scratch/gwallach/goes16_nc/"
     out_path = "/glade/p/cisl/aiml/gwallach/goes16_nc/"
     instruments = sorted(listdir(tar_path))
     for instrument in instruments:

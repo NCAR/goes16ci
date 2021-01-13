@@ -7,6 +7,6 @@
 #SBATCH --mem=128G
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:v100:1
-module purge
+module load cuda/10.1
 source activate goes
 python -u goes16_deep_learning_benchmark.py -c benchmark_config_default >& goes_deep.log

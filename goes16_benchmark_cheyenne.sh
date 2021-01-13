@@ -7,6 +7,5 @@
 #PBS -l select=1:ncpus=36
 #PBS -m abe
 #PBS -M dgagne@ucar.edu
-module purge
 source activate goes
 python -u goes16_deep_learning_benchmark.py >& goes_deep_chey.log

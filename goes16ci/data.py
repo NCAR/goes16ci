@@ -130,5 +130,7 @@ def download_data(start_date,end_date,instrument,sector,outpath):
             if len(hour) == 1:
                 hour = '0' + hour
             files = fs.ls('s3://noaa-goes16/' + ins_sec + '/' + year + '/'+ day +'/'+ hour)
+            print("files =",files)
             for file in files:
                 fs.get(file, outpath + '/' + path + '/' + file.split('/')[-1])
+                print('Success = ', file)
