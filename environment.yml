@@ -5,18 +5,22 @@ dependencies:
   - python=3.7
   - numpy=1.18.*
   - scipy
+  - s3fs
   - matplotlib
+  - psutil
   - xarray
   - netcdf4
   - pyyaml
   - pandas
   - scikit-learn
+  - time
   - pytest
   - pyproj
   - jupyter
   - dask
   - distributed
   - cartopy
+  - optuna
   - pip
   - pip:
     - tensorflow
