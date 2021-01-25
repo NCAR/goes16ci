@@ -7,5 +7,5 @@
 #PBS -l select=1:ncpus=36
 #PBS -m abe
 #PBS -M dgagne@ucar.edu
-source activate goes
+export PATH=/glade/u/home/gwallach/.conda/envs/goes/bin:$PATH
 python -u goes16_deep_learning_benchmark.py >& goes_deep_chey.log

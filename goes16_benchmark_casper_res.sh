@@ -9,8 +9,5 @@
 #SBATCH --exclusive
 #SBATCH --reservation=casper_8xV100
 #SBATCH --mem=768G
-module load cuda/10.1
-module load ncarenv
-ncar_pylib
-source activate goes
+export PATH=/glade/u/home/gwallach/.conda/envs/goes/bin:$PATH
 python -u goes16_deep_learning_benchmark.py -c benchmark_config_default-Gunther.yml >& goes_deep_default.log

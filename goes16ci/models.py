@@ -4,7 +4,6 @@ from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.models import Model, save_model
 from tensorflow.keras.optimizers import Adam, SGD
 from sklearn.metrics import roc_auc_score, brier_score_loss, f1_score, hinge_loss, mean_squared_error
-from aimlutils.hyper_opt.utils import KerasPruningCallback
 import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import Callback
 import numpy as np
@@ -15,6 +14,7 @@ import csv
 from datetime import datetime
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ReduceLROnPlateau
+from aimlutils.hyper_opt.utils import KerasPruningCallback
 
 
 class LossHistory(Callback):
