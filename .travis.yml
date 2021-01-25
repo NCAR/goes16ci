@@ -10,7 +10,7 @@ before_install:
   - conda config --add channels conda-forge
   - conda config --set channel_priority strict
 install:
-  - conda create -n test --yes -c conda-forge python=$PYTHON_VERSION pip numpy scipy matplotlib pandas xarray dask pyyaml netcdf4 s3fs
+  - conda create -n test --yes -c conda-forge python=$PYTHON_VERSION pip numpy scipy matplotlib pandas xarray dask pyyaml netcdf4 s3fs scikit-learn
   - source activate test
   - pip install tensorflow==$TENSORFLOW_VERSION
   - pip install pytest
