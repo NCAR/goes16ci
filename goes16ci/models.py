@@ -14,7 +14,7 @@ import csv
 from datetime import datetime
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ReduceLROnPlateau
-from aimlutils.hyper_opt.utils import KerasPruningCallback
+#from aimlutils.hyper_opt.utils import KerasPruningCallback
 
 
 class LossHistory(Callback):
@@ -106,7 +106,7 @@ class StandardConvNet(object):
             input_shape (tuple of shape [variable, y, x]): The shape of the input data
             output_size: Number of neurons in output layer.
         """
-        self.pruning_callback = KerasPruningCallback(trial,'val_loss',interval)
+        #self.pruning_callback = KerasPruningCallback(trial,'val_loss',interval=interval)
         input_layer = Input(shape=input_shape, name="scn_input")
         num_conv_layers = int(np.log2(input_shape[1]) - np.log2(self.min_data_width))
         num_filters = self.min_filters
@@ -175,7 +175,7 @@ class StandardConvNet(object):
 
 
         history = self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
-                       validation_data=val_data, callbacks=[self.time_history, self.loss_history, self.pruning_callback, self.early_stopping, self.reduce_lr])
+                       validation_data=val_data, callbacks=[self.time_history, self.loss_history, self.early_stopping, self.reduce_lr])
         return history
 
     def predict(self, x):
@@ -229,7 +229,7 @@ class ResNet(StandardConvNet):
         return out
 
     def build_network(self, input_shape, output_size, interval=1, trial=None):
-        self.pruning_callback = KerasPruningCallback(trial,'val_loss',interval)
+        #self.pruning_callback = KerasPruningCallback(trial,'val_loss',interval=interval)
         input_layer = Input(shape=input_shape, name="scn_input")
         num_conv_layers = int(np.log2(input_shape[1]) - np.log2(self.min_data_width))
         num_filters = self.min_filters

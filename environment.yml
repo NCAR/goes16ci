@@ -21,6 +21,7 @@ dependencies:
   - distributed
   - cartopy
   - optuna
+  - cudatoolkit
   - pip
   - pip:
     - tensorflow
