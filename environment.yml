@@ -22,7 +22,5 @@ dependencies:
   - cartopy
   - optuna
   - pip
-  - anaconda:
-    - cudatoolkit
   - pip:
     - tensorflow
