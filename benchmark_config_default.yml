@@ -1,6 +1,6 @@
 log_level: 20
-data_path: "data/" # Path to data
-split_date: "2018-05-20" # Date for splitting training and testing examples
+data_path: "/glade/scratch/gwallach/goes16_nc/ABI_patches/" # Path to data
+split_date: "2019-06-16" # Date for splitting training and testing examples
 conv_net_parameters:
   min_filters: 32 # number of convolutional filters in first layer
   use_dropout: 0 # if 1 use dropout, 0 don't use dropout

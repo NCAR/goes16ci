@@ -7,8 +7,7 @@
 #SBATCH --ntasks-per-node=5
 #SBATCH -e goes16_hpss.log
 #SBATCH -o goes16_hpss.log
-export PATH="/glade/u/home/gwallach/.conda/envs/goes16/bin:$PATH"
-cd ~/goes16ci/scripts
-python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16/ -d 2019-03-01 -e 2019-05-01 -n 5 >& extract.log
-python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16/ -i ABI-L1b -s conus -d 2019-03-01 -e 2019-05-01 -n 5 >& extract.log
-python -u untar_goes16.py >& extract.log
+source activate goes
+python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16_nc/ -d 2019-03-01 -e 2019-10-01 -n 5 >& extract.log
+python -u extract_goes16_hpss.py -o /glade/scratch/$USER/goes16_nc/ -i ABI-L1b -s conus -d 2019-03-01 -e 2019-10-01 -n 5 >& extract.log
+#python -u untar_goes16.py >& extract.log

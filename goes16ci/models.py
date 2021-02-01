@@ -3,6 +3,7 @@ from tensorflow.keras.layers import Dense, Conv2D, Activation, Input, Flatten, A
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.models import Model, save_model
 from tensorflow.keras.optimizers import Adam, SGD
+from sklearn.metrics import roc_auc_score, brier_score_loss, f1_score, hinge_loss, mean_squared_error
 import tensorflow.keras.backend as K
 from tensorflow.keras.callbacks import Callback
 import numpy as np
@@ -11,6 +12,9 @@ from time import perf_counter
 import logging
 import csv
 from datetime import datetime
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ReduceLROnPlateau
+#from aimlutils.hyper_opt.utils import KerasPruningCallback
 
 
 class LossHistory(Callback):
@@ -39,20 +43,7 @@ class TimeHistory(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         self.times.append(perf_counter() - self.epoch_time_start)
-
-"""        
-class ValidationPredictions(tf.keras.callbacks.Callback):
-	def on_train_begin(self, logs=None):
-		self.val_preds = {"labels": val_data[1]}
-	
-	def on_epoch_end(self, epoch, logs=None):
-		self.val_preds[epoch] = self.model.predict(val_data[0])
-
-	def on_train_end(self, logs=None):
-		val_pred_df = pd.DataFrame(self.val_preds)
-		time_str = pd.Timestamp.now().strftime("%d/%m/%Y %I:%M:%S")
-		val_pred_df.to_csv(f"validation_predictions_{time_str}.csv")
-"""
+        
 
 class StandardConvNet(object):
     """
@@ -102,18 +93,20 @@ class StandardConvNet(object):
         self.sgd_momentum = sgd_momentum
         self.model = None
         self.parallel_model = None
+        self.verbose = verbose
         self.time_history = TimeHistory()
         self.loss_history = LossHistory()
-        #self.validation_predictions = ValidationPredictions()
-        self.verbose = verbose
-
-    def build_network(self, input_shape, output_size):
+        self.early_stopping = EarlyStopping(monitor='val_loss')
+        self.reduce_lr = ReduceLROnPlateau(monitor='val_loss')
+        
+    def build_network(self, input_shape, output_size, interval=1, trial=None):
         """
         Create a keras model with the hyperparameters specified in the constructor.
         Args:
             input_shape (tuple of shape [variable, y, x]): The shape of the input data
             output_size: Number of neurons in output layer.
         """
+        #self.pruning_callback = KerasPruningCallback(trial,'val_loss',interval=interval)
         input_layer = Input(shape=input_shape, name="scn_input")
         num_conv_layers = int(np.log2(input_shape[1]) - np.log2(self.min_data_width))
         num_filters = self.min_filters
@@ -182,7 +175,7 @@ class StandardConvNet(object):
 
 
         history = self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
-                       validation_data=val_data, callbacks=[self.time_history, self.loss_history])
+                       validation_data=val_data, callbacks=[self.time_history, self.loss_history, self.early_stopping, self.reduce_lr])
         return history
 
     def predict(self, x):
@@ -235,7 +228,8 @@ class ResNet(StandardConvNet):
         out = Add()([y, x])
         return out
 
-    def build_network(self, input_shape, output_size):
+    def build_network(self, input_shape, output_size, interval=1, trial=None):
+        #self.pruning_callback = KerasPruningCallback(trial,'val_loss',interval=interval)
         input_layer = Input(shape=input_shape, name="scn_input")
         num_conv_layers = int(np.log2(input_shape[1]) - np.log2(self.min_data_width))
         num_filters = self.min_filters
@@ -256,7 +250,7 @@ class ResNet(StandardConvNet):
 
 
 def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
-                       conv_net_hyperparameters, num_processors, seed, dtype="float32", inter_op_threads=2):
+                       conv_net_hyperparameters, num_processors, seed, dtype="float32", inter_op_threads=2,trial=None):
     """
     Train a convolutional neural network on the CPU.
     """
@@ -293,7 +287,7 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
 
 def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                        conv_net_hyperparameters, num_gpus, seed,
-                       dtype="float32", scale_batch_size=1):
+                       dtype="float32", scale_batch_size=1,trial=None):
     """
     Trains convolutional neural network on one or more GPUs.
     Args:
@@ -344,7 +338,7 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                     scn.batch_size *= num_gpus
                     scn.learning_rate *= num_gpus
                 x_shape, y_size = scn.get_data_shapes(train_data, train_labels)
-                scn.build_network(x_shape, y_size)
+                scn.build_network(x_shape, y_size, trial)
                 scn.compile_model()
                 history = scn.fit(train_data, train_labels)
                 #scn.fit(train_data, train_labels)

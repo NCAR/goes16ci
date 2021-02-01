@@ -16,6 +16,7 @@ from datetime import datetime
 import platform
 from multiprocessing import Pipe, Process
 import traceback
+import pickle
 
 
 def main():
@@ -72,6 +73,7 @@ def main():
     train_data_scaled = 1.0 - scaler.fit_transform(train_data)
     val_data_scaled = 1.0 - scaler.transform(val_data)
     print(scaler.scale_values)
+    scaler.scale_values.to_csv("scale_values.csv")
     # Start monitor process
     parent_p, child_p = Pipe()
     dl_monitor = Monitor(child_p)

@@ -32,10 +32,12 @@ def load_glm_data(path, start_date, end_date, freq="20S",
     all_times = pd.DatetimeIndex(pd.date_range(start=start_date, end=end_date, freq=freq))[0:-1]
     print(all_times[0], all_times[-1])
     all_dates = np.unique(all_times.date)
-    all_date_strings = [date.strftime("%Y%m%d") for date in all_dates]
+    all_date_strings = [date.strftime("%Y%j") for date in all_dates]
     all_flashes = []
     for date_str in all_date_strings:
         glm_date_files = sorted(glob(join(path, date_str, "*.nc")))
+        if len(glm_date_files) == 0:
+            print(f"No GLM Files Found for Date {date_str}")
         for glm_date_file in glm_date_files:
             file_start_date = pd.Timestamp(datetime.strptime(glm_date_file[:-3].split("/")[-1].split("_")[4][1:-1],
                                                              "%Y%j%H%M%S"))

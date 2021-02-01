@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 import argparse
-
+import pandas as pd
 import netCDF4
 import numpy as np
 from tensorflow.keras.models import load_model
+from goes16ci.models import MinMaxScaler2D
 
 """
 Script to perform inference of a patchfile using a trained Tensorflow NN model
@@ -34,14 +35,19 @@ def infer(modelfile,patchfile,glmtemplate,outfile,verbose=False):
 
     abi_data = np.swapaxes(abi_data,1,3)
     abi_data = np.swapaxes(abi_data,1,2)
+    print("Not Scaled = ",abi_data.shape)
+    #rescale ABI data to pass into Model
+    scaler = MinMaxScaler2D()
+    scaler.scale_values = pd.read_csv("../scale_values.csv")
+    abi_data_scaled = 1.0 - scaler.transform(abi_data)
+    print("Scaled = ",abi_data_scaled.shape)
+    
+
     if verbose:
         print("abi_data.shape = %s, abi_data = %s" % (abi_data.shape,abi_data[[0,-1]]),flush=True)
 
     print("Performing inference",flush=True)
-    y_hat = model.predict(abi_data)
-    if verbose:
-        print("y_hat.shape = %s, y_hat = %s" % (y_hat.shape,y_hat),flush=True)
-
+    y_hat = model.predict(abi_data_scaled)
     print("Reading output template netcdf")
     nc = netCDF4.Dataset(glmtemplate)
     y_dim_size = nc.dimensions['y'].size

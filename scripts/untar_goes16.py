@@ -4,9 +4,8 @@ from os.path import join, exists
 import subprocess
 
 def main():
-    #print("Within Tar Main File")
-    tar_path = "/glade/scratch/gwallach/goes16/"
-    out_path = "/glade/scratch/gwallach/goes16_nc/"
+    tar_path = "/glade/scratch/gwallach/goes16_nc/"
+    out_path = "/glade/p/cisl/aiml/gwallach/goes16_nc/"
     instruments = sorted(listdir(tar_path))
     for instrument in instruments:
         #print("Instrument's Loop")

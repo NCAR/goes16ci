@@ -2,7 +2,7 @@ language: python
 env:
   - PYTHON_VERSION=3.7 TENSORFLOW_VERSION=1.15.2
   - PYTHON_VERSION=3.7 TENSORFLOW_VERSION=2.0.0
-  - PYTHON_VERSION=3.7 TENSORFLOW_VERSION=2.1.0
+  - PYTHON_VERSION=3.7 TENSORFLOW_VERSION=2.3.1
 before_install:
   - wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
   - sh Miniconda3-latest-Linux-x86_64.sh -b -p /home/travis/miniconda
@@ -10,7 +10,7 @@ before_install:
   - conda config --add channels conda-forge
   - conda config --set channel_priority strict
 install:
-  - conda create -n test --yes -c conda-forge python=$PYTHON_VERSION pip numpy scipy matplotlib pandas xarray dask pyyaml netcdf4 s3fs
+  - conda create -n test --yes -c conda-forge python=$PYTHON_VERSION pip "numpy<1.19" scipy matplotlib pandas xarray dask pyyaml netcdf4 s3fs scikit-learn
   - source activate test
   - pip install tensorflow==$TENSORFLOW_VERSION
   - pip install pytest

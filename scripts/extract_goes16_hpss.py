@@ -11,7 +11,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", default="/FS/EOL/operational/satellite/goes/g16/", 
                         help="Path to HPSS top level GOES-16 directory")
-    parser.add_argument("-t", "--tout", default="/glade/scratch/gwallach/goes16/", help="Path to tar files")
+    parser.add_argument("-t", "--tout", default="/glade/scratch/gwallach/goes16_nc/", help="Path to tar files")
     parser.add_argument("-o", "--out", default="/glade/scratch/gwallach/goes16_nc/", help="Path where output netCDF files are extracted")
     parser.add_argument("-i", "--ins", default="GLM-L2", choices=["ABI-L1b", "GLM-L2"], 
                         help="Instrument on satellite")
