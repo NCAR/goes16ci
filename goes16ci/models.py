@@ -11,6 +11,7 @@ import pandas as pd
 from time import perf_counter
 import logging
 import csv
+import optuna
 from datetime import datetime
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ReduceLROnPlateau
@@ -282,6 +283,9 @@ def train_conv_net_cpu(train_data, train_labels, val_data, val_labels,
         epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
     date_time = str(datetime.now())
     save_model(scn.model, 'goes16ci_model_cpu' + date_time + '.h5', save_format = 'h5')
+    if epoch_loss[-1] == 0.0:
+        print("History == 0", history)
+        raise optuna.TrialPruned()
     return epoch_times, batch_loss, epoch_loss
 
 
@@ -326,6 +330,9 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                 batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
                 epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
                 logging.info(scn.model.summary())
+                if epoch_loss[-1] == 0.0:
+                    logging.warning(f"History == 0.0 {history.history}")
+                    raise OSError("Died because val_loss was 0")
                 if scn is not None:
                     save_model(scn.model, "goes16_resnet_gpus_{0:02d}.h5".format(num_gpus))
         elif num_gpus > 1: 
@@ -352,6 +359,9 @@ def train_conv_net_gpu(train_data, train_labels, val_data, val_labels,
                 epoch_times = scn.time_history.times
                 batch_loss = np.array(scn.loss_history.losses).ravel().tolist()
                 epoch_loss = np.array(scn.loss_history.val_losses).ravel().tolist()
+                if epoch_loss[-1] == 0.0:
+                    logger.warning(f"History == 0.0 {history.history}")
+                    raise OSError("Died because val_loss was 0")
     else:
         print("No GPUs available")
         epoch_times = [-1]
