@@ -9,6 +9,7 @@ from datetime import datetime
 import time
 from dask import compute
 import dask.array as da
+import logging
 
 PARALLEL=True
 
@@ -31,10 +32,14 @@ def load_glm_data(path, start_date, end_date, freq="20S",
     """
     all_times = pd.DatetimeIndex(pd.date_range(start=start_date, end=end_date, freq=freq))[0:-1]
     print(all_times[0], all_times[-1])
+    print("Within Load GLM Data Function")
     all_dates = np.unique(all_times.date)
     all_date_strings = [date.strftime("%Y%j") for date in all_dates]
     all_flashes = []
+    print("Right Before for loop")
+    #print("Here are all the date strings: ", all_date_strings)
     for date_str in all_date_strings:
+        #print("Within for loop for date: ", date_str)
         glm_date_files = sorted(glob(join(path, date_str, "*.nc")))
         if len(glm_date_files) == 0:
             print(f"No GLM Files Found for Date {date_str}")
@@ -47,9 +52,12 @@ def load_glm_data(path, start_date, end_date, freq="20S",
                     all_flashes.append(glm_ds[list(columns)].to_dataframe())
                 glm_ds.close()
                 del glm_ds
+    #print("All Flashes =", all_flashes)
     if len(all_flashes) > 0:
         combined_flashes = pd.concat(all_flashes)
+        #print("Check Combined Flashes =", combined_flashes)
     else:
+        print("No Combined Flashes!")
         combined_flashes = None
     return combined_flashes
 
@@ -163,12 +171,16 @@ def create_glm_grids(glm_path, out_path, start_date, end_date, out_freq,
         period_flashes = load_glm_data(glm_path, period_start, period_end)
         print("load_glm_data runtime: %d" % (time.time()-start_t))
         if period_flashes is not None:
+            #print("Registered Period Flashes", period_flashes)
             start_t = time.time()
             flash_count_grid[o - 1] = grid.grid_glm_data(period_flashes)
             print("grid_glm_data runtime: %d" % (time.time()-start_t))
+        else:
+            print("Period Flashes is None")
         print(out_dates[o], flash_count_grid[o - 1].values.max(), flash_count_grid[o - 1].values.sum(), flush=True)
         del period_flashes
     flash_count_grid.attrs.update(grid_proj_params)
+    #print("Flash Count Check",flash_count_grid)
     out_file = join(out_path,
                     f"glm_grid_s{start_date.strftime('%Y%m%dT%H%M%S')}_e{end_date.strftime('%Y%m%dT%H%M%S')}.nc")
     if not exists(out_path):

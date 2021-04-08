@@ -17,6 +17,7 @@ import platform
 from multiprocessing import Pipe, Process
 import traceback
 import pickle
+from sklearn.utils import class_weight
 
 
 def main():
@@ -62,19 +63,36 @@ def main():
         scale_batch_size = 1
     # Split training and validation data
     logging.info("Split training and testing data")
+    print("ALL COUNTS=",all_counts)
+    print("all counts shape=", all_counts.shape) 
     train_indices = np.where(all_time < pd.Timestamp(config["split_date"]))[0]
     val_indices = np.where(all_time >= pd.Timestamp(config["split_date"]))[0]
     train_data = all_data[train_indices].astype(config["dtype"])
     val_data = all_data[val_indices].astype(config["dtype"])
-    train_counts = np.where(all_counts[train_indices] > 0, 1, 0).astype(config["dtype"])
+    train_counts = all_counts[train_indices].astype(config["dtype"])
+    #train_counts = np.where(all_counts[train_indices] > 0, 1, 0).astype(config["dtype"])
+    print("Train counts =",train_counts)
+    print("Train counts shape=", train_counts.shape)
+    print("Train counts 1's=",len([x for x in train_counts if x == 1.0]))
+    print("Train counts 2's=",len([y for y in train_counts if y == 0.0]))
     val_counts = np.where(all_counts[val_indices] > 0, 1, 0).astype(config["dtype"])
     # Rescale training and validation data
+    #print("ALL DATA=", all_data)
     scaler = MinMaxScaler2D()
     train_data_scaled = 1.0 - scaler.fit_transform(train_data)
     val_data_scaled = 1.0 - scaler.transform(val_data)
+    #save out to parquet files
+    with open('train_data_scaled.pkl','wb') as f:
+        pickle.dump(train_data_scaled, f)
+    with open('train_counts.pkl','wb') as f:
+        pickle.dump(train_counts, f)
     print(scaler.scale_values)
     scaler.scale_values.to_csv("scale_values.csv")
     # Start monitor process
+    #train_ints = [t.argmax() for t in train_data_scaled]
+    #print("Training Data==",train_data)
+    class_weights = class_weight.compute_class_weight('balanced',np.unique(train_counts),train_counts)
+    np.savetxt("class_weights.csv",class_weights, delimiter=",")
     parent_p, child_p = Pipe()
     dl_monitor = Monitor(child_p)
     monitor_proc = Process(target=dl_monitor.run)
@@ -89,7 +107,7 @@ def main():
             start_timing(benchmark_data, block_name, parent_p, out_path)
             epoch_times, batch_loss, epoch_loss = train_conv_net_cpu(train_data_scaled, train_counts,
                                              val_data_scaled, val_counts, config["conv_net_parameters"],
-                                             config["num_cpus"], config["random_seed"])
+                                             config["num_cpus"], config["random_seed"],class_weights)
             end_timing(benchmark_data, epoch_times, block_name, parent_p, out_path)
             benchmark_data[block_name]["batch_loss"] = batch_loss
             benchmark_data[block_name]["epoch_loss"] = epoch_loss

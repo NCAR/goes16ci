@@ -15,6 +15,7 @@ import optuna
 from datetime import datetime
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ReduceLROnPlateau
+from sklearn.utils import class_weight
 #from aimlutils.hyper_opt.utils import KerasPruningCallback
 
 
@@ -174,9 +175,9 @@ class StandardConvNet(object):
         else:
             val_data = (val_x, val_y)
 
-
+        class_weights = {0: 1.0, 1: 2.0}
         history = self.model.fit(x, y, batch_size=self.batch_size, epochs=self.epochs, verbose=self.verbose,
-                       validation_data=val_data, callbacks=[self.time_history, self.loss_history, self.early_stopping, self.reduce_lr])
+                       validation_data=val_data, callbacks=[self.time_history, self.loss_history, self.early_stopping, self.reduce_lr],class_weight=class_weights)
         return history
 
     def predict(self, x):
