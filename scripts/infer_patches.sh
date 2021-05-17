@@ -1,9 +1,9 @@
 #!/bin/bash -l
 #PBS -N goes16ci
 #PBS -A NAML0001
-#PBS -l -walltime=05:00:00
+#PBS -l walltime=05:00:00
 #PBS -q casper
-#PBS -l select=N:mem=128G
+#PBS -l select=1:ncpus=8:mem=128GB
 module load ncarenv
 ncar_pylib
 source activate goes
