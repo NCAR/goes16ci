@@ -1,6 +1,7 @@
-import pandas as pd
-import numpy as np
-import xarray as xr
+'''
+Creates Plots for comparing different ABI data. Requires ABI data to be saved out to pickle files, which is done with the BinnedCountPredictionModel.py script
+Bins can be changed to see if there are real differences between ABI for different bins of lightning counts
+'''
 import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
