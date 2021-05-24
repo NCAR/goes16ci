@@ -1,3 +1,10 @@
+'''
+Purpose of this Resnet is to predict binned amount of lightning counts based on ABI data. For instance, one may set the bins = [10,50,100]. 
+This will set the bins for the predictions equal to [0,1,10,50,100], as the code is always set to include 0 and 1 as bins for the lightning counts. 
+Code will also output a plot .png 'BinConfusion.png' of the confusion matrix for the results of the code
+Will also output the best model as best.pt 
+'''
+
 import random
 import pickle
 import numpy as np
@@ -451,7 +458,11 @@ import seaborn as sn
 import pandas as pd
 cm = metrics.confusion_matrix(y_true, y_pred, normalize = 'true')
 df_cm = pd.DataFrame(cm, index = sorted(list(set(y_true))), columns = sorted(list(set(y_true))))
-df_cm.to_csv('Confusion_Matrix.csv')
+plt.figure(figsize = (10,7))
+sn.heatmap(df_cm, annot=True)
+plt.xlabel("Actual lighting class")
+plt.ylabel("Predicted lighting class")
+plt.savefig('BinConfusion.png')
 
 
 
