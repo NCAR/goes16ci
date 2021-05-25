@@ -9,4 +9,4 @@
 #PBS -j oe
 #PBS -k eod
 export PATH=/glade/u/home/gwallach/.conda/envs/goes/bin:$PATH
-python PlotsForABIComparison.py >& plottingABI.log
+python scripts/PlotsForABIComparison.py >& plottingABI.log

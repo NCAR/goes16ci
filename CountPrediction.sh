@@ -10,4 +10,4 @@
 #PBS -k eod
 export PATH=/glade/u/home/gwallach/.conda/envs/goes/bin:$PATH
 module load cuda/11 cudnn nccl
-python BinnedCountPredictionModel.py >& countprediction.log
+python scripts/BinnedCountPredictionModel.py >& countprediction.log
