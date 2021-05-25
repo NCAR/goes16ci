@@ -36,7 +36,6 @@ def load_glm_data(path, start_date, end_date, freq="20S",
     all_dates = np.unique(all_times.date)
     all_date_strings = [date.strftime("%Y%j") for date in all_dates]
     all_flashes = []
-    print("Right Before for loop")
     #print("Here are all the date strings: ", all_date_strings)
     for date_str in all_date_strings:
         #print("Within for loop for date: ", date_str)
