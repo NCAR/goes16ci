@@ -16,6 +16,12 @@ from datetime import datetime
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ReduceLROnPlateau
 from sklearn.utils import class_weight
+from torch.nn.modules.loss import _WeightedLoss
+from torch.optim.lr_scheduler import *
+from torch.autograd import Variable
+import torch.nn.functional as F
+import torch.nn as nn
+import torch
 #from aimlutils.hyper_opt.utils import KerasPruningCallback
 
 
@@ -409,3 +415,261 @@ class MinMaxScaler2D(object):
     def fit_transform(self, x, y=None):
         self.fit(x, y)
         return self.transform(x)
+    
+def torch_accuracy(output, target, topk=(1,)):
+    """
+    Computes the accuracy over the k top predictions for the specified values of k
+    In top-5 accuracy you give yourself credit for having the right answer
+    if the right answer appears in your top five guesses.
+    """
+    with torch.no_grad():
+        # ---- get the topk most likely labels according to your model
+        # get the largest k \in [n_classes] (i.e. the number of most likely probabilities we will use)
+        maxk = max(topk)  # max number labels we will consider in the right choices for out model
+        batch_size = target.size(0)
+        # get top maxk indicies that correspond to the most likely probability scores
+        _, y_pred = output.topk(k=maxk, dim=1)  # _, [B, n_classes] -> [B, maxk]
+        y_pred = y_pred.t()  # [B, maxk] -> [maxk, B] Expects input to be <= 2-D tensor and transposes dimensions 0 and 1.
+        target_reshaped = target.view(1, -1).expand_as(y_pred)  # [B] -> [B, 1] -> [maxk, B]
+        # compare every topk's model prediction with the ground truth & give credit if any matches the ground truth
+        correct = (y_pred == target_reshaped)  # [maxk, B] were for each example we know which topk prediction matched truth
+        # -- get topk accuracy
+        list_topk_accs = []  # idx is topk1, topk2, ... etc
+        for k in topk:
+            # get tensor of which topk answer was right
+            ind_which_topk_matched_truth = correct[:k]  # [maxk, B] -> [k, B]
+            # flatten it to help compute if we got it correct for each example in batch
+            flattened_indicator_which_topk_matched_truth = ind_which_topk_matched_truth.reshape(-1).float()  # [k, B] -> [kB]
+            # get if we got it right for any of our top k prediction for each example in batch
+            tot_correct_topk = flattened_indicator_which_topk_matched_truth.float().sum(dim=0, keepdim=True)  # [kB] -> [1]
+            # compute topk accuracy - the accuracy of the mode's ability to get it right within it's top k guesses/preds
+            topk_acc = tot_correct_topk / batch_size  # topk accuracy for entire batch
+            list_topk_accs.append(topk_acc.item())
+        return list_topk_accs
+    
+class BinResNet(nn.Module):
+    def __init__(self, fcl_layers = [], dr = 0.0, output_size = 1, resnet_model = 18, pretrained = True):
+        super(ResNet, self).__init__()
+        self.pretrained = pretrained
+        self.resnet_model = resnet_model 
+        if self.resnet_model == 18:
+            resnet = models.resnet18(pretrained=self.pretrained)
+        elif self.resnet_model == 34:
+            resnet = models.resnet34(pretrained=self.pretrained)
+        elif self.resnet_model == 50:
+            resnet = models.resnet50(pretrained=self.pretrained)
+        elif self.resnet_model == 101:
+            resnet = models.resnet101(pretrained=self.pretrained)
+        elif self.resnet_model == 152:
+            resnet = models.resnet152(pretrained=self.pretrained)
+        resnet.conv1 = torch.nn.Conv1d(4, 64, (7, 7), (2, 2), (3, 3), bias=False)
+        modules = list(resnet.children())[:-1]      # delete the last fc layer.
+        self.resnet_output_dim = resnet.fc.in_features
+        self.resnet = nn.Sequential(*modules)
+        self.fcn = self.make_fcn(self.resnet_output_dim, output_size, fcl_layers, dr)
+        
+    def make_fcn(self, input_size, output_size, fcl_layers, dr):
+        if len(fcl_layers) > 0:
+            fcn = [
+                nn.Dropout(dr),
+                nn.Linear(input_size, fcl_layers[0]),
+                nn.BatchNorm1d(fcl_layers[0]),
+                torch.nn.LeakyReLU()
+            ]
+            if len(fcl_layers) == 1:
+                fcn.append(nn.Linear(fcl_layers[0], output_size))
+            else:
+                for i in range(len(fcl_layers)-1):
+                    fcn += [
+                        nn.Linear(fcl_layers[i], fcl_layers[i+1]),
+                        nn.BatchNorm1d(fcl_layers[i+1]),
+                        torch.nn.LeakyReLU(),
+                        nn.Dropout(dr)
+                    ]
+                fcn.append(nn.Linear(fcl_layers[i+1], output_size))
+        else:
+            fcn = [
+                nn.Dropout(dr),
+                nn.Linear(input_size, output_size)
+            ]
+        if output_size > 1:
+            fcn.append(torch.nn.LogSoftmax(dim=1))
+        return nn.Sequential(*fcn)
+
+    def _make_layer(self, block, planes, num_blocks, stride):
+        strides = [stride] + [1]*(num_blocks-1)
+        layers = []
+        for stride in strides:
+            layers.append(block(self.in_planes, planes, stride))
+            self.in_planes = planes * block.expansion
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = self.resnet(x)
+        x = x.view(x.size(0), -1)  # flatten
+        x = self.fcn(x)
+        return x
+
+class SmoothCrossEntropyLoss(_WeightedLoss):
+    def __init__(self, weight=None, reduction='mean', smoothing=0.0):
+        super().__init__(weight=weight, reduction=reduction)
+        self.smoothing = smoothing
+        self.weight = weight
+        self.reduction = reduction
+
+    def k_one_hot(self, targets:torch.Tensor, n_classes:int, smoothing=0.0):
+        with torch.no_grad():
+            targets = torch.empty(size=(targets.size(0), n_classes),
+                                  device=targets.device) \
+                                  .fill_(smoothing /(n_classes-1)) \
+                                  .scatter_(1, targets.data.unsqueeze(1), 1.-smoothing)
+        return targets
+
+    def reduce_loss(self, loss):
+        return loss.mean() if self.reduction == 'mean' else loss.sum() \
+        if self.reduction == 'sum' else loss
+
+    def forward(self, inputs, targets):
+        assert 0 <= self.smoothing < 1
+
+        targets = self.k_one_hot(targets, inputs.size(-1), self.smoothing)
+        log_preds = F.log_softmax(inputs, -1)
+
+        if self.weight is not None:
+            log_preds = log_preds * self.weight.unsqueeze(0)
+
+        return self.reduce_loss(-(targets * log_preds).sum(dim=-1))
+    
+def bintrainloop(epochs, X_train, train_batch_size, batches_per_epoch, valid_batch_size, topk, x, y, model, train_criterion, test_criterion, patience, optimizer, lr_scheduler):
+    train_loader = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(torch.from_numpy(X_train), torch.from_numpy(y_train)),
+        batch_size=train_batch_size, 
+        shuffle=True)
+
+    test_loader = torch.utils.data.DataLoader(
+        torch.utils.data.TensorDataset(
+            torch.from_numpy(X_test), torch.from_numpy(y_test)),
+        batch_size=valid_batch_size,
+        shuffle=False)
+    #run training
+    epoch_test_losses = []
+    for epoch in range(epochs):
+
+        ### Train the model 
+        model.train()
+
+        # Shuffle the data first
+        batch_loss = []
+        accuracy = {k: [] for k in topk}
+        indices = list(range(X_train.shape[0]))
+        random.shuffle(indices)
+
+        # Now split into batches
+        train_batches_per_epoch = int(X_train.shape[0] / train_batch_size) 
+        train_batches_per_epoch = min(batches_per_epoch, train_batches_per_epoch)
+
+        # custom tqdm so we can see the progress
+        batch_group_generator = tqdm(
+            enumerate(train_loader), 
+            total=train_batches_per_epoch, 
+            leave=True
+        )
+
+        for k, (x, y) in batch_group_generator:
+
+            # Converting to torch tensors and moving to GPU
+            inputs = x.float().to(device)
+            lightning_counts = y.long().to(device)
+
+            # Clear gradient
+            optimizer.zero_grad()
+
+            # get output from the model, given the inputs
+            pred_lightning_counts = model(inputs)
+
+            # get loss for the predicted output
+            loss = train_criterion(pred_lightning_counts, lightning_counts.squeeze(-1))
+
+            # compute the top-k accuracy
+            acc = torch_accuracy(pred_lightning_counts.cpu(), lightning_counts.cpu(), topk = topk)
+            for i,l in enumerate(topk):
+                accuracy[l] += [acc[i]]
+
+            # get gradients w.r.t to parameters
+            loss.backward()
+            batch_loss.append(loss.item())
+
+            # update parameters
+            optimizer.step()
+
+            # update tqdm
+            to_print = "Epoch {} train_loss: {:.4f}".format(epoch, np.mean(batch_loss))
+            for l in sorted(accuracy.keys()):
+                to_print += " top-{}_acc: {:.4f}".format(l,np.mean(accuracy[l]))
+            #to_print += " top-2_acc: {:.4f}".format(np.mean(accuracy[2])
+            #to_print += " top-3_acc: {:.4f}".format(np.mean(accuracy[3]))
+            to_print += " lr: {:.12f}".format(optimizer.param_groups[0]['lr'])
+            batch_group_generator.set_description(to_print)
+            batch_group_generator.update()
+
+            if k >= train_batches_per_epoch and k > 0:
+                break
+
+        torch.cuda.empty_cache()
+
+        ### Test the model 
+        model.eval()
+        with torch.no_grad():
+
+            batch_loss = []
+            accuracy = {k: [] for k in topk}
+
+            # custom tqdm so we can see the progress
+            valid_batches_per_epoch = int(X_test.shape[0] / valid_batch_size) 
+            batch_group_generator = tqdm(
+                test_loader, 
+                total=valid_batches_per_epoch, 
+                leave=True
+            )
+
+            for (x, y) in batch_group_generator:
+                # Converting to torch tensors and moving to GPU
+                inputs = x.float().to(device)
+                lightning_counts = y.long().to(device)
+                # get output from the model, given the inputs
+                pred_lightning_counts = model(inputs)
+                # get loss for the predicted output
+                loss = test_criterion(pred_lightning_counts, lightning_counts.squeeze(-1))
+                batch_loss.append(loss.item())
+                # compute the accuracy
+                acc = torch_accuracy(pred_lightning_counts, lightning_counts, topk = topk)
+                for i,k in enumerate(topk):
+                    accuracy[k] += [acc[i]]
+                # update tqdm
+                to_print = "Epoch {} test_loss: {:.4f}".format(epoch, np.mean(batch_loss))
+                for k in sorted(accuracy.keys()):
+                    to_print += " top-{}_acc: {:.4f}".format(k,np.mean(accuracy[k]))
+                batch_group_generator.set_description(to_print)
+                batch_group_generator.update()
+
+        test_loss = 1 - np.mean(accuracy[1])
+        epoch_test_losses.append(test_loss)
+
+        # Lower the learning rate if we are not improving
+        lr_scheduler.step(test_loss)
+
+        # Save the model if its the best so far.
+        if test_loss == min(epoch_test_losses):
+            state_dict = {
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': test_loss
+            }
+            torch.save(state_dict, "best.pt")
+
+        # Stop training if we have not improved after X epochs
+        best_epoch = [i for i,j in enumerate(epoch_test_losses) if j == min(epoch_test_losses)][-1]
+        offset = epoch - best_epoch
+        if offset >= patience:
+            break
