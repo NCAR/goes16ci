@@ -1,9 +1,9 @@
 #!/bin/bash -l
-#SBATCH --job-name=goes16ci
-#SBATCH --account=NAML0001
-#SBATCH --time=12:00:00
-#SBATCH --partition=dav
-#SBATCH --mem=128G
+#PBS -N goes16ci
+#PBS -A NAML0001
+#PBS -l walltime=05:00:00
+#PBS -q casper
+#PBS -l select=1:ncpus=8:mem=128GB
 module load ncarenv
 ncar_pylib
 source activate goes

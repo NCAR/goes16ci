@@ -12,6 +12,7 @@ import cartopy.feature as cfeature
 import matplotlib.animation as animation
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import brier_score_loss
+from sklearn.metrics import f1_score
 import pandas as pd
 #access inputted files
 #parse arguments
@@ -28,19 +29,23 @@ print(Pred)
 print(Actual_glm)
 #get data from datasets
 light_prob = Pred.data_vars['lightning_prob']
+light_prob = light_prob.where(light_prob.values < 0.5, 1.0)
+light_prob = light_prob.where(light_prob.values >= 0.5, 0.5)
+print("unique=",np.unique(light_prob))
 actual_light = Actual_glm.data_vars['lightning_counts']
 lons = Pred.data_vars['lon']
 lats = Pred.data_vars['lat']
 #clean up the actual dataset 
 actual_light.values = actual_light.values.astype('float64')
-actual_light.values[actual_light.values <= 0.0] = np.nan
+#actual_light.values[actual_light.values <= 0.0] = np.nan
 
+'''
 #plot data and create animation
 fig = plt.figure(figsize=(18,12))
 ax = plt.axes(projection=ccrs.Miller())
 states = cfeature.STATES.with_scale('10m')
 ax.add_feature(states, edgecolor='black')
-pred_bounds = np.array([0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1])
+pred_bounds = np.array([0.5,1])
 norm = colors.BoundaryNorm(boundaries=pred_bounds,ncolors=200,clip=True)
 Pred = ax.pcolormesh(lons,lats,light_prob[0,:,:],transform=ccrs.Miller(),norm=norm,cmap='Reds',vmin=0.1,vmax=1)
 Actual = ax.pcolormesh(lons,lats,actual_light[0,:,:],transform=ccrs.Miller(),cmap='Blues',vmin=0,vmax=100)
@@ -48,7 +53,6 @@ plt.colorbar(Actual,ax=ax,label='Actual Lightning Strikes',shrink=0.75)
 plt.colorbar(Pred,ax=ax,label='Probability of Lightning Strikes',shrink=0.75)
 
 def animation_frame(i):
-    ax.clear()
     Pred = ax.pcolormesh(lons,lats,light_prob[i,:,:],transform=ccrs.Miller(),norm=norm,cmap='Reds',vmin=0.1,vmax=1)
     Actual = ax.pcolormesh(lons,lats,actual_light[i,:,:],transform=ccrs.Miller(),cmap='Blues',vmin=0,vmax=100)
     #change the title to display the timestep for every time
@@ -67,30 +71,35 @@ start_time = str(actual_light[0,:,:].time.coords)
 start_time = start_time.partition("[ns] ")[2]
 end_time = str(actual_light[-1,:,:].time.coords)
 end_time = end_time.partition("[ns] ")[2]
-anim = animation.FuncAnimation(fig,animation_frame, init_func=init,frames=len(light_prob),interval=10, blit = True)
+anim = animation.FuncAnimation(fig,animation_frame, init_func=init,frames=len(light_prob),interval=10)
 Writer = animation.PillowWriter()
 anim.save('PredvsActual{}-{}.gif'.format(start_time,end_time),writer=Writer,dpi=400)
 
+'''
+start_time = str(actual_light[0,:,:].time.coords)
+start_time = start_time.partition("[ns] ")[2]
+end_time = str(actual_light[-1,:,:].time.coords)
+end_time = end_time.partition("[ns] ")[2]
 
-prob = Pred.lightning_prob.values
-y_true = Actual_glm.lightning_counts.values
+light = Actual_glm.lightning_counts.values
+light[light < 1] = 0
+light[light >= 1] = 1
+prob = light_prob.values
+y_true = light
 prob = prob.flatten()
 #print(np.amax(prob))
 y_true = y_true.flatten()
-#print(y_true)
-for i in range(len(y_true)):
-    if y_true[i] > 0:
-        #print(i)
-        y_true[i] = 1
-        #print(i)
-#print(np.amax(y_true))
+#print(y_true))
 bscore = brier_score_loss(y_true,prob)
 #print(bscore)
 rocauc = roc_auc_score(y_true,prob)
+f1 = f1_score(y_true,prob)
+
 print(rocauc)
 stats = {
     'Brier Score': bscore,
-    'Area Under the RoC Curve': rocauc
+    'Area Under the RoC Curve': rocauc,
+    'F1 Score': f1
 }
 df = pd.DataFrame(stats,index=[1])
-df.to_csv('VisualizationStats{}-{}.csv'.format(start_time,end_time))
+df.to_csv('VisualizationStats{}-{}_weights.csv'.format(start_time,end_time))
