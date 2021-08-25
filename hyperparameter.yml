@@ -1,0 +1,53 @@
+log:
+  save_path: "goes_hyperparameter_data/log.txt"
+
+slurm:
+  jobs: 10
+  kernel: "export PATH=/glade/u/home/gwallach/.conda/envs/goes/bin:$PATH"
+  bash: ["module load cuda/11 cudnn nccl"]
+  batch:
+    account: "NAML0001"
+    gres: "gpu:v100:1"
+    mem: "128G"
+    n: 8
+    t: "24:00:00"
+    J: "goes_hyper"
+    o: "goes_hyper.out"
+    e: "goes_hyper.err"
+    
+optuna:
+  name: "goes_optimization.db"
+  reload: 0
+  objective: "objective.py"
+  direction: "minimize"
+  metric: "val_loss"
+  n_trials: 1000
+  gpu: True
+  save_path: 'goes_hyperparameter_data'
+  sampler:
+    type: "TPESampler"
+  parameters:
+    conv_net_parameters:learning_rate:
+      type: "loguniform"
+      settings:
+        name: "lr"
+        low: 0.0000001
+        high: 0.01
+    conv_net_parameters:min_filters:
+      type: "int"
+      settings:
+        name: "min_filters"
+        low: 1
+        high: 200
+    conv_net_parameters:batch_size:
+      type: "int"
+      settings:
+        name: "batch_size"
+        low: 512
+        high: 4096
+    conv_net_parameters:use_dropout:
+      type: "categorical"
+      settings:
+        name: "use_dropout"
+        choices: [0,1]
+    

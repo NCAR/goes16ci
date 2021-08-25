@@ -392,10 +392,10 @@ class MinMaxScaler2D(object):
         Calculate the values for the min/max transformation.
         """
         variables = np.arange(x.shape[-1])
-        self.scale_values = pd.DataFrame(0, index=variables, columns=["min", "max"])
+        self.scale_values = pd.DataFrame(0.0, index=variables, columns=["min", "max"])
         for v in variables:
-            self.scale_values.loc[v, "min"] = x[:, :, :, v].min()
-            self.scale_values.loc[v, "max"] = x[:, :, :, v].max()
+            self.scale_values.loc[v, "min"] = float(x[:, :, :, v].min())
+            self.scale_values.loc[v, "max"] = float(x[:, :, :, v].max())
             self.scale_values.loc[v, "range"] = self.scale_values.loc[v, "max"] - self.scale_values.loc[v, "min"]
 
     def transform(self, x):
