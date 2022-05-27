@@ -1,0 +1,30 @@
+nldn:
+  nldn_path: "/glade/u/home/pabharathi/GOES/nldn/McGovern3" # Path to McGOVERN parquet files
+  grid_path: "/glade/u/home/pabharathi/GOES/nldn/goes16_grid"  # Path to output gridded GLM netCDF files
+  start_date: "2018-02-04" # First date to perform gridding
+  end_date: "2018-05-14" # Last date to perform gridding (inclusive)
+  file_freq: "1D" # How often to write separate netCDF files
+  grid_freq: "20Min" # Aggregation period for each gridded time step
+  grid_proj_params: # Projection definition for Pyproj (PROJ4 keywords)
+    proj: "lcc"
+    lon_0: -90.0
+    lat_0: 39.0
+    lat_1: 25.0
+    lat_2: 50.0
+  dx_km: 16.0 # Horizontal grid spacing in km
+  x_extent_km: 1024.0 # west-east extent of grid in km
+  y_extent_km: 2048.0 # south-north extent of grid in km
+abi:
+  abi_path: "/glade/scratch/pabharathi/goes16_nc/ABI-L1b-RadC"
+  patch_path: "/glade/scratch/pabharathi/goes16_nc/abi_patches_unet"
+  glm_grid_path: "/glade/u/home/pabharathi/GOES/nldn/goes16_grid"
+  start_date: "2018-06-18"
+  end_date: "2018-06-19"
+  bands: [14]
+  file_freq: "1D"
+  lead_time: "20Min"
+  patch_x_length_pixels: 128
+  patch_y_length_pixels: 128
+  samples_per_time: 2
+  time_range_minutes: 4
+  bt: 1
