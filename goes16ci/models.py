@@ -13,8 +13,6 @@ import logging
 import csv
 import optuna
 from datetime import datetime
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.callbacks import ReduceLROnPlateau
 from sklearn.utils import class_weight
 from torch.nn.modules.loss import _WeightedLoss
 from torch.optim.lr_scheduler import *
@@ -22,6 +20,8 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import torch.nn as nn
 import torch
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ReduceLROnPlateau
 #from aimlutils.hyper_opt.utils import KerasPruningCallback
 
 
